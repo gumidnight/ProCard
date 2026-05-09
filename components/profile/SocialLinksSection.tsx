@@ -10,8 +10,13 @@ const PLATFORM_CONFIG: Record<
   twitch: { label: "Twitch", icon: "📺", baseUrl: "https://twitch.tv/" },
   twitter: { label: "Twitter / X", icon: "🐦", baseUrl: "https://x.com/" },
   youtube: { label: "YouTube", icon: "▶️", baseUrl: "https://youtube.com/" },
+  instagram: { label: "Instagram", icon: "📷", baseUrl: "https://instagram.com/" },
+  tiktok: { label: "TikTok", icon: "🎵", baseUrl: "https://tiktok.com/" },
+  kick: { label: "Kick", icon: "🎮", baseUrl: "https://kick.com/" },
+  liquipedia: { label: "Liquipedia", icon: "📖" },
   opgg: { label: "OP.GG", icon: "📊" },
   tracker: { label: "Tracker.gg", icon: "📈" },
+  website: { label: "Website", icon: "🔗" },
 };
 
 function resolveUrl(link: SocialLinkRow): string | null {

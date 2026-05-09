@@ -5,47 +5,44 @@ import type { UserRow } from "@/types/db";
 import { findUserById } from "@/lib/db/users";
 
 // ---------------------------------------------------------------------------
-// Session management
-// For local dev: in-memory Map (cleared on server restart)
-// For production: Cloudflare KV with 7-day TTL
+// Stateless session management
+// Cookie value = userId:createdAt.hmac — no server-side store needed.
+// HMAC prevents tampering; createdAt enforces TTL.
 // ---------------------------------------------------------------------------
 
 const SESSION_COOKIE = "rankcard_session";
 const SESSION_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
 
-interface SessionData {
-  userId: string;
-  createdAt: number;
-}
-
-// In-memory session store for local development
-const sessionStore = new Map<string, SessionData>();
-
 /**
- * Create a new session for a user and set the cookie.
+ * Create a new session for a user.
+ * Returns the cookie name/value/options so the caller can set it on a response.
  */
-export async function createSession(userId: string): Promise<string> {
-  const token = crypto.randomUUID();
-  const data: SessionData = {
-    userId,
-    createdAt: Math.floor(Date.now() / 1000),
+export function createSession(userId: string): {
+  cookieName: string;
+  cookieValue: string;
+  cookieOptions: {
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: "lax";
+    path: string;
+    maxAge: number;
   };
+} {
+  const createdAt = Math.floor(Date.now() / 1000);
+  const payload = `${userId}:${createdAt}`;
+  const signed = signPayload(payload);
 
-  // Sign the token with HMAC to prevent tampering
-  const signed = signToken(token);
-
-  sessionStore.set(token, data);
-
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, signed, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_TTL,
-  });
-
-  return token;
+  return {
+    cookieName: SESSION_COOKIE,
+    cookieValue: signed,
+    cookieOptions: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: SESSION_TTL,
+    },
+  };
 }
 
 /**
@@ -57,20 +54,21 @@ export async function getSessionUser(): Promise<UserRow | null> {
   const signed = cookieStore.get(SESSION_COOKIE)?.value;
   if (!signed) return null;
 
-  const token = verifyToken(signed);
-  if (!token) return null;
+  const payload = verifyPayload(signed);
+  if (!payload) return null;
 
-  const session = sessionStore.get(token);
-  if (!session) return null;
+  const colonIdx = payload.indexOf(":");
+  if (colonIdx === -1) return null;
+
+  const userId = payload.slice(0, colonIdx);
+  const createdAt = parseInt(payload.slice(colonIdx + 1), 10);
+  if (isNaN(createdAt)) return null;
 
   // Check expiry
   const now = Math.floor(Date.now() / 1000);
-  if (now - session.createdAt > SESSION_TTL) {
-    sessionStore.delete(token);
-    return null;
-  }
+  if (now - createdAt > SESSION_TTL) return null;
 
-  return findUserById(session.userId);
+  return findUserById(userId);
 }
 
 /**
@@ -78,13 +76,6 @@ export async function getSessionUser(): Promise<UserRow | null> {
  */
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
-  const signed = cookieStore.get(SESSION_COOKIE)?.value;
-
-  if (signed) {
-    const token = verifyToken(signed);
-    if (token) sessionStore.delete(token);
-  }
-
   cookieStore.set(SESSION_COOKIE, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -95,27 +86,27 @@ export async function destroySession(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// HMAC signing — prevents session fixation via forged cookie values
+// HMAC signing — payload.hmac
 // ---------------------------------------------------------------------------
 
-function signToken(token: string): string {
+function signPayload(payload: string): string {
   const hmac = crypto
     .createHmac("sha256", config.session.secret)
-    .update(token)
+    .update(payload)
     .digest("hex");
-  return `${token}.${hmac}`;
+  return `${payload}.${hmac}`;
 }
 
-function verifyToken(signed: string): string | null {
+function verifyPayload(signed: string): string | null {
   const dotIndex = signed.lastIndexOf(".");
   if (dotIndex === -1) return null;
 
-  const token = signed.slice(0, dotIndex);
+  const payload = signed.slice(0, dotIndex);
   const sig = signed.slice(dotIndex + 1);
 
   const expected = crypto
     .createHmac("sha256", config.session.secret)
-    .update(token)
+    .update(payload)
     .digest("hex");
 
   // Timing-safe comparison
@@ -125,7 +116,7 @@ function verifyToken(signed: string): string | null {
   if (sigBuf.length !== expectedBuf.length) return null;
 
   if (crypto.timingSafeEqual(sigBuf, expectedBuf)) {
-    return token;
+    return payload;
   }
   return null;
 }

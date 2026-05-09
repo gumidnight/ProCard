@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Input } from "@/components/ui/Input";
@@ -35,25 +34,19 @@ const SOCIAL_PLATFORMS: {
   id: SocialPlatform;
   label: string;
   placeholder: string;
+  icon: string;
 }[] = [
-  {
-    id: "discord",
-    label: "Discord",
-    placeholder: "username#0001 or server invite link",
-  },
-  { id: "twitch", label: "Twitch", placeholder: "twitch.tv/username" },
-  { id: "twitter", label: "Twitter / X", placeholder: "x.com/username" },
-  {
-    id: "youtube",
-    label: "YouTube",
-    placeholder: "youtube.com/@channel",
-  },
-  { id: "opgg", label: "OP.GG", placeholder: "op.gg profile URL" },
-  {
-    id: "tracker",
-    label: "Tracker.gg",
-    placeholder: "tracker.gg profile URL",
-  },
+  { id: "twitch", label: "Twitch", icon: "📺", placeholder: "username" },
+  { id: "youtube", label: "YouTube", icon: "▶️", placeholder: "@channel" },
+  { id: "kick", label: "Kick", icon: "🎮", placeholder: "username" },
+  { id: "twitter", label: "Twitter / X", icon: "🐦", placeholder: "@handle" },
+  { id: "instagram", label: "Instagram", icon: "📷", placeholder: "@handle" },
+  { id: "tiktok", label: "TikTok", icon: "🎵", placeholder: "@handle" },
+  { id: "discord", label: "Discord", icon: "💬", placeholder: "username or invite" },
+  { id: "liquipedia", label: "Liquipedia", icon: "📖", placeholder: "liquipedia.net/..." },
+  { id: "opgg", label: "OP.GG", icon: "📊", placeholder: "op.gg/summoners/..." },
+  { id: "tracker", label: "Tracker.gg", icon: "📈", placeholder: "tracker.gg/..." },
+  { id: "website", label: "Website / Other", icon: "🔗", placeholder: "https://..." },
 ];
 
 export function Step5Publish({
@@ -64,10 +57,6 @@ export function Step5Publish({
   isPublishing,
   slug,
 }: Step5Props) {
-  const [showSocials, setShowSocials] = useState(
-    data.socials.length > 0,
-  );
-
   const updateSocial = (platform: SocialPlatform, value: string) => {
     const existing = data.socials.find((s) => s.platform === platform);
     const socials = existing
@@ -122,33 +111,32 @@ export function Step5Publish({
 
       {/* Social links */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div>
           <label className="text-sm font-medium text-text-secondary">
-            Social Links
+            Media & Socials
           </label>
-          {!showSocials && (
-            <Button
-              variant="ghost"
-              onClick={() => setShowSocials(true)}
-              className="text-xs"
-            >
-              + Add socials
-            </Button>
-          )}
+          <p className="mt-1 text-xs text-text-muted">
+            Showcase your professional presence. All optional — fill in only what you use.
+          </p>
         </div>
 
-        {showSocials &&
-          SOCIAL_PLATFORMS.map((platform) => (
-            <Input
-              key={platform.id}
-              label={platform.label}
-              value={getSocialValue(platform.id)}
-              onChange={(e) =>
-                updateSocial(platform.id, e.target.value)
-              }
-              placeholder={platform.placeholder}
-            />
+        <div className="grid gap-2">
+          {SOCIAL_PLATFORMS.map((platform) => (
+            <div key={platform.id} className="flex items-center gap-2">
+              <span className="flex w-9 shrink-0 items-center justify-center text-lg">
+                {platform.icon}
+              </span>
+              <Input
+                value={getSocialValue(platform.id)}
+                onChange={(e) =>
+                  updateSocial(platform.id, e.target.value)
+                }
+                placeholder={`${platform.label} — ${platform.placeholder}`}
+                className="flex-1"
+              />
+            </div>
           ))}
+        </div>
       </div>
 
       {/* Preview URL */}

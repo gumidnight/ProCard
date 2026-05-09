@@ -62,13 +62,20 @@ export async function GET(req: NextRequest) {
     });
 
     // Create session
-    await createSession(user.id);
+    const session = createSession(user.id);
 
     // Redirect based on whether they have a profile
     const profile = findProfileByUserId(user.id);
     const destination = profile ? "/dashboard" : "/onboarding";
 
-    return NextResponse.redirect(new URL(destination, req.url));
+    const response = NextResponse.redirect(new URL(destination, req.url));
+    response.cookies.set(
+      session.cookieName,
+      session.cookieValue,
+      session.cookieOptions,
+    );
+
+    return response;
   } catch (err) {
     console.error("Auth callback error:", err);
     return NextResponse.redirect(new URL("/login?error=auth_failed", req.url));

@@ -104,7 +104,8 @@ CREATE TABLE IF NOT EXISTS social_links (
   id            TEXT    PRIMARY KEY,
   profile_id    TEXT    NOT NULL,
   platform      TEXT    NOT NULL CHECK (platform IN (
-                  'discord','twitch','twitter','youtube','opgg','tracker'
+                  'discord','twitch','twitter','youtube','instagram','tiktok',
+                  'kick','liquipedia','opgg','tracker','website'
                 )),
   handle_or_url TEXT    NOT NULL,
   display_order INTEGER NOT NULL DEFAULT 0,

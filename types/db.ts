@@ -80,8 +80,13 @@ export type SocialPlatform =
   | "twitch"
   | "twitter"
   | "youtube"
+  | "instagram"
+  | "tiktok"
+  | "kick"
+  | "liquipedia"
   | "opgg"
-  | "tracker";
+  | "tracker"
+  | "website";
 
 export interface SocialLinkRow {
   id: string;
