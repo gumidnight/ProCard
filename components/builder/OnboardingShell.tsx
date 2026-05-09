@@ -92,6 +92,7 @@ export function OnboardingShell({
           ...prev.connections,
           [game]: {
             connected: true,
+            accountName: data?.nickname,
             nickname: data?.nickname,
           },
         },
