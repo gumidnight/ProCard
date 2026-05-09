@@ -1,0 +1,24 @@
+name = "rankcard"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "rankcard-db"
+database_id = "local"                          # Replace with real ID after `wrangler d1 create`
+migrations_dir = "migrations"
+
+# KV Namespace
+[[kv_namespaces]]
+binding = "KV"
+id = "local"                                   # Replace with real ID after `wrangler kv namespace create`
+
+# R2 Bucket
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "rankcard-assets"
+
+# Cron trigger — rank refresh every 30 minutes
+[triggers]
+crons = ["*/30 * * * *"]

@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  /* Background layers */
+  --bg-base: #07070f;
+  --bg-surface: #0f0f1c;
+  --bg-elevated: #161625;
+  --bg-subtle: #1e1e30;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  /* Text */
+  --text-primary: #f0f0f8;
+  --text-secondary: #8888a8;
+  --text-muted: #44445a;
+
+  /* Accent */
+  --accent: #534ab7;
+  --accent-light: #7b72d4;
+
+  /* Rank colours */
+  --rank-iron: #ba7517;
+  --rank-bronze: #ba7517;
+  --rank-silver: #888799;
+  --rank-gold: #c9a227;
+  --rank-platinum: #0f8a6a;
+  --rank-emerald: #1aad8a;
+  --rank-diamond: #2a7fbf;
+  --rank-master: #9d48e0;
+  --rank-grandmaster: #c93030;
+  --rank-challenger: #d4af37;
+  --rank-immortal: #9d48e0;
+  --rank-radiant: #e8b84b;
+  --rank-global-elite: #d4af37;
+}
+
+@theme inline {
+  --color-bg-base: var(--bg-base);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --font-display: var(--font-rajdhani);
+  --font-body: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body, 'Inter', sans-serif);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection colour */
+::selection {
+  background: var(--accent);
+  color: var(--text-primary);
+}

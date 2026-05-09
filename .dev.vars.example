@@ -1,0 +1,15 @@
+# Copy this file to .dev.vars and fill in your values
+# NEVER commit .dev.vars — it contains secrets
+
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_REDIRECT_URI=http://localhost:3000/auth/callback
+
+RIOT_API_KEY=
+RIOT_CLIENT_ID=
+RIOT_CLIENT_SECRET=
+RIOT_REDIRECT_URI=http://localhost:3000/api/connect/riot/callback
+
+FACEIT_API_KEY=
+
+SESSION_SECRET=
