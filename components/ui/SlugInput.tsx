@@ -91,7 +91,7 @@ export function SlugInput({
         hint={
           status === "available"
             ? "This slug is available!"
-            : "rankcard.gg/" + (value || "your-slug")
+            : "procard.gg/" + (value || "your-slug")
         }
       />
       {statusIndicator && (

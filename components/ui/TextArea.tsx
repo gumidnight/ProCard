@@ -35,7 +35,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           <div className="flex items-center justify-between">
             <label
               htmlFor={inputId}
-              className="text-sm font-medium text-text-secondary"
+              className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted"
             >
               {label}
             </label>
@@ -51,10 +51,10 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           id={inputId}
           value={value}
           maxLength={maxLength}
-          className={`rounded-lg border bg-bg-elevated px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none transition-colors resize-none ${
+          className={`rounded-[7px] border bg-bg-elevated px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none transition-colors duration-150 resize-none ${
             error
-              ? "border-red-500/50 focus:border-red-500"
-              : "border-border-subtle focus:border-border-strong"
+              ? "border-danger/50 focus:border-danger"
+              : "border-border-subtle focus:border-accent/50"
           } ${className}`}
           {...props}
         />

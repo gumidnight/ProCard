@@ -7,7 +7,7 @@ import fs from "node:fs";
 // In production this will be Cloudflare D1 via getCloudflareContext()
 // ---------------------------------------------------------------------------
 
-const DB_PATH = path.join(process.cwd(), ".wrangler", "state", "rankcard.db");
+const DB_PATH = path.join(process.cwd(), ".wrangler", "state", "procard.db");
 
 let _db: Database.Database | null = null;
 

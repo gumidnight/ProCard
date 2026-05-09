@@ -4,19 +4,19 @@ import type { SocialLinkRow } from "@/types/db";
 
 const PLATFORM_CONFIG: Record<
   string,
-  { label: string; icon: string; baseUrl?: string }
+  { label: string; baseUrl?: string }
 > = {
-  discord: { label: "Discord", icon: "💬" },
-  twitch: { label: "Twitch", icon: "📺", baseUrl: "https://twitch.tv/" },
-  twitter: { label: "Twitter / X", icon: "🐦", baseUrl: "https://x.com/" },
-  youtube: { label: "YouTube", icon: "▶️", baseUrl: "https://youtube.com/" },
-  instagram: { label: "Instagram", icon: "📷", baseUrl: "https://instagram.com/" },
-  tiktok: { label: "TikTok", icon: "🎵", baseUrl: "https://tiktok.com/" },
-  kick: { label: "Kick", icon: "🎮", baseUrl: "https://kick.com/" },
-  liquipedia: { label: "Liquipedia", icon: "📖" },
-  opgg: { label: "OP.GG", icon: "📊" },
-  tracker: { label: "Tracker.gg", icon: "📈" },
-  website: { label: "Website", icon: "🔗" },
+  discord: { label: "Discord" },
+  twitch: { label: "Twitch", baseUrl: "https://twitch.tv/" },
+  twitter: { label: "Twitter / X", baseUrl: "https://x.com/" },
+  youtube: { label: "YouTube", baseUrl: "https://youtube.com/" },
+  instagram: { label: "Instagram", baseUrl: "https://instagram.com/" },
+  tiktok: { label: "TikTok", baseUrl: "https://tiktok.com/" },
+  kick: { label: "Kick", baseUrl: "https://kick.com/" },
+  liquipedia: { label: "Liquipedia" },
+  opgg: { label: "OP.GG" },
+  tracker: { label: "Tracker.gg" },
+  website: { label: "Website" },
 };
 
 function resolveUrl(link: SocialLinkRow): string | null {
@@ -42,23 +42,21 @@ export function SocialLinksSection({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-semibold tracking-wide text-text-secondary">
-        Socials
-      </h2>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+        SOCIALS
+      </p>
       <div className="flex flex-col gap-2">
         {links.map((link) => {
           const config = PLATFORM_CONFIG[link.platform] ?? {
             label: link.platform,
-            icon: "🔗",
           };
           const url = resolveUrl(link);
           const content = (
-            <div className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-surface px-4 py-3 text-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border-default">
-              <span>{config.icon}</span>
+            <div className="flex items-center gap-3 rounded-[10px] border border-border-subtle bg-bg-surface px-4 py-3 text-sm transition-colors duration-[180ms] hover:border-border-default">
               <span className="font-medium text-text-primary">
                 {config.label}
               </span>
-              <span className="ml-auto text-text-muted">
+              <span className="ml-auto font-mono text-xs text-text-muted">
                 {link.handle_or_url}
               </span>
             </div>

@@ -22,13 +22,13 @@ export function CardShell({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-border-subtle bg-bg-surface">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-bg-subtle/40"
-      >
-        <div className="flex items-center gap-3">
+    <section className="overflow-hidden rounded-[10px] border border-border-subtle bg-bg-surface">
+      <div className="flex items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-bg-subtle/40">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center gap-3 text-left"
+        >
           {icon && <span className="text-xl">{icon}</span>}
           <div>
             <h3 className="font-display text-base font-semibold tracking-wide text-text-primary">
@@ -38,16 +38,19 @@ export function CardShell({
               <p className="mt-0.5 text-xs text-text-muted">{subtitle}</p>
             )}
           </div>
-        </div>
+        </button>
         <div className="flex items-center gap-3">
           {rightSlot}
-          <span
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
             className={`text-text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            aria-label={open ? "Collapse" : "Expand"}
           >
             ▾
-          </span>
+          </button>
         </div>
-      </button>
+      </div>
 
       {open && (
         <div className="border-t border-border-subtle px-5 py-5">

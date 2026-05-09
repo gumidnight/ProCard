@@ -1,40 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  /* Background layers */
-  --bg-base: #07070f;
-  --bg-surface: #0f0f1c;
-  --bg-elevated: #161625;
-  --bg-subtle: #1e1e30;
+  /* Backgrounds — layered dark system */
+  --bg-base:      #07070f;
+  --bg-surface:   #0f0f1c;
+  --bg-elevated:  #161625;
+  --bg-subtle:    #1e1e30;
 
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-subtle:  rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.11);
+  --border-strong:  rgba(255, 255, 255, 0.20);
 
   /* Text */
-  --text-primary: #f0f0f8;
+  --text-primary:   #f0f0f8;
   --text-secondary: #8888a8;
-  --text-muted: #44445a;
+  --text-muted:     #44445a;
 
-  /* Accent */
-  --accent: #534ab7;
-  --accent-light: #7b72d4;
+  /* Accent — use sparingly */
+  --accent:        #534AB7;
+  --accent-light:  #7b72d4;
+  --accent-dark:   #3a3380;
+  --accent-subtle: rgba(83, 74, 183, 0.12);
+
+  /* Semantic */
+  --color-success: #23a55a;
+  --color-danger:  #e05252;
+  --color-warning: #E8B84B;
+  --color-info:    #2A7FBF;
 
   /* Rank colours */
-  --rank-iron: #ba7517;
-  --rank-bronze: #ba7517;
-  --rank-silver: #888799;
-  --rank-gold: #c9a227;
-  --rank-platinum: #0f8a6a;
-  --rank-emerald: #1aad8a;
-  --rank-diamond: #2a7fbf;
-  --rank-master: #9d48e0;
-  --rank-grandmaster: #c93030;
-  --rank-challenger: #d4af37;
-  --rank-immortal: #9d48e0;
-  --rank-radiant: #e8b84b;
-  --rank-global-elite: #d4af37;
+  --rank-iron:        #8a8a8a;
+  --rank-bronze:      #BA7517;
+  --rank-silver:      #888799;
+  --rank-gold:        #C9A227;
+  --rank-platinum:    #0F8A6A;
+  --rank-emerald:     #1AAD8A;
+  --rank-diamond:     #2A7FBF;
+  --rank-master:      #9D48E0;
+  --rank-grandmaster: #C93030;
+  --rank-challenger:  #E8B84B;
+  --rank-immortal:    #9D48E0;
+  --rank-radiant:     #E8B84B;
+  --rank-global:      #E8B84B;
+
+  /* Timing */
+  --duration-fast:   100ms;
+  --duration-normal: 180ms;
+  --duration-slow:   280ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -50,9 +64,16 @@
   --color-text-muted: var(--text-muted);
   --color-accent: var(--accent);
   --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-success: var(--color-success);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
   --font-display: var(--font-rajdhani);
   --font-body: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
+  --radius-card: 10px;
 }
 
 body {
@@ -70,4 +91,21 @@ html {
 ::selection {
   background: var(--accent);
   color: var(--text-primary);
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes successFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.4); }
+  70%  { box-shadow: 0 0 0 8px rgba(35, 165, 90, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0); }
 }

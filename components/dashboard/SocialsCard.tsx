@@ -14,20 +14,19 @@ interface SocialsCardProps {
 const SOCIAL_PLATFORMS: {
   id: SocialPlatform;
   label: string;
-  icon: string;
   placeholder: string;
 }[] = [
-  { id: "twitch", label: "Twitch", icon: "📺", placeholder: "username" },
-  { id: "youtube", label: "YouTube", icon: "▶️", placeholder: "@channel" },
-  { id: "kick", label: "Kick", icon: "🎮", placeholder: "username" },
-  { id: "twitter", label: "Twitter / X", icon: "🐦", placeholder: "@handle" },
-  { id: "instagram", label: "Instagram", icon: "📷", placeholder: "@handle" },
-  { id: "tiktok", label: "TikTok", icon: "🎵", placeholder: "@handle" },
-  { id: "discord", label: "Discord", icon: "💬", placeholder: "username or invite" },
-  { id: "liquipedia", label: "Liquipedia", icon: "📖", placeholder: "liquipedia.net/..." },
-  { id: "opgg", label: "OP.GG", icon: "📊", placeholder: "op.gg/..." },
-  { id: "tracker", label: "Tracker.gg", icon: "📈", placeholder: "tracker.gg/..." },
-  { id: "website", label: "Website / Other", icon: "🔗", placeholder: "https://..." },
+  { id: "twitch", label: "Twitch", placeholder: "username" },
+  { id: "youtube", label: "YouTube", placeholder: "@channel" },
+  { id: "kick", label: "Kick", placeholder: "username" },
+  { id: "twitter", label: "Twitter / X", placeholder: "@handle" },
+  { id: "instagram", label: "Instagram", placeholder: "@handle" },
+  { id: "tiktok", label: "TikTok", placeholder: "@handle" },
+  { id: "discord", label: "Discord", placeholder: "username or invite" },
+  { id: "liquipedia", label: "Liquipedia", placeholder: "liquipedia.net/..." },
+  { id: "opgg", label: "OP.GG", placeholder: "op.gg/..." },
+  { id: "tracker", label: "Tracker.gg", placeholder: "tracker.gg/..." },
+  { id: "website", label: "Website / Other", placeholder: "https://..." },
 ];
 
 export function SocialsCard({ socials, onUpdate }: SocialsCardProps) {
@@ -117,13 +116,13 @@ export function SocialsCard({ socials, onUpdate }: SocialsCardProps) {
     <CardShell
       title="Media & Socials"
       subtitle="Showcase your professional presence"
-      icon="📣"
+      icon=""
     >
       <div className="flex flex-col gap-3">
         {SOCIAL_PLATFORMS.map((platform) => (
           <div key={platform.id} className="flex items-center gap-2">
-            <span className="flex w-9 shrink-0 items-center justify-center text-lg">
-              {platform.icon}
+            <span className="flex w-9 shrink-0 items-center justify-center text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+              {platform.label.slice(0, 3)}
             </span>
             <Input
               value={draft[platform.id] ?? ""}

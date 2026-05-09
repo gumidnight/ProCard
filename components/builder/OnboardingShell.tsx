@@ -30,6 +30,7 @@ interface OnboardingState {
   country: string;
   tagline: string;
   bio: string;
+  esports_role: string;
   // Step 2
   selectedGames: string[];
   roles: { game: string; role: string; is_main: boolean }[];
@@ -60,6 +61,7 @@ const INITIAL_STATE: OnboardingState = {
   country: "",
   tagline: "",
   bio: "",
+  esports_role: "",
   selectedGames: [],
   roles: [],
   connections: {
@@ -116,6 +118,7 @@ export function OnboardingShell({
           country: state.country || null,
           tagline: state.tagline || null,
           bio: state.bio || null,
+          esports_role: state.esports_role || null,
         }),
       });
 
@@ -222,6 +225,7 @@ export function OnboardingShell({
                 country: state.country,
                 tagline: state.tagline,
                 bio: state.bio,
+                esports_role: state.esports_role,
               }}
               onChange={(d) => setState((s) => ({ ...s, ...d }))}
               onNext={next}

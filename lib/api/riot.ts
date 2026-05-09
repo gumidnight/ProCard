@@ -4,13 +4,24 @@ import type {
   LolSummoner,
   LolLeagueEntry,
 } from "@/types/api";
+import { RIOT_REGIONS, getCluster, type RiotRegion } from "./riot-regions";
+
+// Re-export so existing imports from "@/lib/api/riot" keep working
+export { RIOT_REGIONS, type RiotRegion };
 
 // ---------------------------------------------------------------------------
-// Riot API base URLs
+// Riot API regions
+// Account API uses "regional routing" (americas/europe/asia/sea)
+// LoL game API uses "platform routing" (na1/euw1/eun1/kr/...)
 // ---------------------------------------------------------------------------
 
-const ACCOUNT_BASE = "https://americas.api.riotgames.com";
-const LOL_BASE = "https://na1.api.riotgames.com";
+function accountBase(region: RiotRegion): string {
+  return `https://${getCluster(region)}.api.riotgames.com`;
+}
+
+function lolBase(region: RiotRegion): string {
+  return `https://${region}.api.riotgames.com`;
+}
 
 // RSO OAuth endpoints
 const RSO_AUTH_URL = "https://auth.riotgames.com/authorize";
@@ -93,8 +104,9 @@ export async function refreshRsoToken(refreshToken: string): Promise<{
 /** Fetch account using RSO access token (after OAuth) */
 export async function fetchRiotAccountByToken(
   accessToken: string,
+  region: RiotRegion = "na1",
 ): Promise<RiotAccount> {
-  const res = await fetch(`${ACCOUNT_BASE}/riot/account/v1/accounts/me`, {
+  const res = await fetch(`${accountBase(region)}/riot/account/v1/accounts/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -109,14 +121,15 @@ export async function fetchRiotAccountByToken(
 export async function fetchRiotAccountByRiotId(
   gameName: string,
   tagLine: string,
+  region: RiotRegion,
 ): Promise<RiotAccount> {
   const res = await fetch(
-    `${ACCOUNT_BASE}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
+    `${accountBase(region)}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
     { headers: { "X-Riot-Token": config.riot.apiKey } },
   );
 
   if (res.status === 404) {
-    throw new Error("Riot account not found. Check your Riot ID.");
+    throw new Error("Riot account not found. Check your Riot ID and region.");
   }
   if (!res.ok) {
     throw new Error(`Riot account lookup failed: ${res.status}`);
@@ -132,9 +145,10 @@ export async function fetchRiotAccountByRiotId(
 /** Get summoner by PUUID — needed to get encrypted summonerId for league query */
 export async function fetchLolSummoner(
   puuid: string,
+  region: RiotRegion,
 ): Promise<LolSummoner> {
   const res = await fetch(
-    `${LOL_BASE}/lol/summoner/v4/summoners/by-puuid/${puuid}`,
+    `${lolBase(region)}/lol/summoner/v4/summoners/by-puuid/${puuid}`,
     { headers: { "X-Riot-Token": config.riot.apiKey } },
   );
 
@@ -148,12 +162,30 @@ export async function fetchLolSummoner(
   return res.json();
 }
 
-/** Get ranked entries for a summoner */
-export async function fetchLolRankedEntries(
-  summonerId: string,
+/** Get ranked entries by PUUID (newer endpoint, replaces summoner-id-based) */
+export async function fetchLolRankedEntriesByPuuid(
+  puuid: string,
+  region: RiotRegion,
 ): Promise<LolLeagueEntry[]> {
   const res = await fetch(
-    `${LOL_BASE}/lol/league/v4/entries/by-summoner/${summonerId}`,
+    `${lolBase(region)}/lol/league/v4/entries/by-puuid/${puuid}`,
+    { headers: { "X-Riot-Token": config.riot.apiKey } },
+  );
+
+  if (!res.ok) {
+    throw new Error(`LoL ranked fetch failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+/** Get ranked entries for a summoner (legacy summoner-id endpoint) */
+export async function fetchLolRankedEntries(
+  summonerId: string,
+  region: RiotRegion,
+): Promise<LolLeagueEntry[]> {
+  const res = await fetch(
+    `${lolBase(region)}/lol/league/v4/entries/by-summoner/${summonerId}`,
     { headers: { "X-Riot-Token": config.riot.apiKey } },
   );
 
@@ -176,9 +208,11 @@ export interface LolRankResult {
 
 export async function fetchLolRankByPuuid(
   puuid: string,
+  region: RiotRegion,
 ): Promise<LolRankResult> {
-  const summoner = await fetchLolSummoner(puuid);
-  const entries = await fetchLolRankedEntries(summoner.id);
+  const summoner = await fetchLolSummoner(puuid, region);
+  // Use the PUUID-based endpoint (summoner-id endpoint is deprecated)
+  const entries = await fetchLolRankedEntriesByPuuid(puuid, region);
 
   return {
     summoner,
@@ -194,20 +228,25 @@ export async function fetchLolRankByPuuid(
 export interface RiotConnectResult {
   account: RiotAccount;
   lolRank: LolRankResult | null;
+  lolError?: string;
+  region: RiotRegion;
 }
 
 export async function connectByRiotId(
   gameName: string,
   tagLine: string,
+  region: RiotRegion,
 ): Promise<RiotConnectResult> {
-  const account = await fetchRiotAccountByRiotId(gameName, tagLine);
+  const account = await fetchRiotAccountByRiotId(gameName, tagLine, region);
 
   let lolRank: LolRankResult | null = null;
+  let lolError: string | undefined;
   try {
-    lolRank = await fetchLolRankByPuuid(account.puuid);
-  } catch {
-    // Account may not play LoL — that's fine
+    lolRank = await fetchLolRankByPuuid(account.puuid, region);
+  } catch (err) {
+    lolError = err instanceof Error ? err.message : String(err);
+    console.warn(`[riot] LoL fetch failed for ${gameName}#${tagLine} on ${region}:`, lolError);
   }
 
-  return { account, lolRank };
+  return { account, lolRank, lolError, region };
 }

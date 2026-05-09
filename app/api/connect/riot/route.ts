@@ -3,11 +3,13 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth/session";
 import { findProfileByUserId } from "@/lib/db/profiles";
-import { upsertGameConnection } from "@/lib/db/game-connections";
+import { upsertGameConnection, deleteGameConnection } from "@/lib/db/game-connections";
 import {
   hasRsoCredentials,
   getRsoAuthUrl,
   connectByRiotId,
+  RIOT_REGIONS,
+  type RiotRegion,
 } from "@/lib/api/riot";
 
 // ---------------------------------------------------------------------------
@@ -70,8 +72,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Validate region
+  const region: RiotRegion = body.region ?? "euw1";
+  if (!RIOT_REGIONS.find((r) => r.value === region)) {
+    return NextResponse.json(
+      { error: "Invalid region" },
+      { status: 400 },
+    );
+  }
+
   try {
-    const result = await connectByRiotId(gameName, tagLine);
+    const result = await connectByRiotId(gameName, tagLine, region);
 
     // Determine which games to connect (default: whatever they selected)
     const games: string[] = body.games ?? ["lol"];
@@ -88,6 +99,7 @@ export async function POST(req: NextRequest) {
         puuid: result.account.puuid,
         account_name: `${result.account.gameName}#${result.account.tagLine}`,
         summoner_id: result.lolRank?.summoner.id ?? null,
+        region,
         rank_tier: soloQ?.tier ?? null,
         rank_division: soloQ?.rank ?? null,
         lp_rr: soloQ?.leaguePoints ?? null,
@@ -104,6 +116,7 @@ export async function POST(req: NextRequest) {
         game: "valorant",
         puuid: result.account.puuid,
         account_name: `${result.account.gameName}#${result.account.tagLine}`,
+        region,
         queue_type: "competitive",
       });
       connections.push(conn);
@@ -114,6 +127,8 @@ export async function POST(req: NextRequest) {
         gameName: result.account.gameName,
         tagLine: result.account.tagLine,
       },
+      region,
+      lolError: result.lolError,
       connections,
     });
   } catch (err) {
@@ -121,4 +136,22 @@ export async function POST(req: NextRequest) {
       err instanceof Error ? err.message : "Failed to connect Riot account";
     return NextResponse.json({ error: message }, { status: 400 });
   }
+}
+
+/** Disconnect Riot accounts */
+export async function DELETE() {
+  const user = await getSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const profile = findProfileByUserId(user.id);
+  if (!profile) {
+    return NextResponse.json({ error: "No profile" }, { status: 400 });
+  }
+
+  deleteGameConnection(profile.id, "lol");
+  deleteGameConnection(profile.id, "valorant");
+
+  return NextResponse.json({ ok: true });
 }

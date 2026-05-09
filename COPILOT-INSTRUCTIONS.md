@@ -1,5 +1,80 @@
-# RankCard — Claude Code Prompt
-## Esports Linktree · MVP Build
+# ProCard.gg — AI Agent Context
+
+## CURRENT STATE (as of May 2026)
+
+> **Read this section first.** It tells you exactly where the project is and what has been built.
+
+### What's done (all working, typechecks pass)
+
+- **Renamed from RankCard → ProCard** — all files, DB, cookies, wrangler config updated. Folder is still `RankCard/` but everything inside says ProCard.
+- **Discord OAuth login** — full flow, stateless HMAC-signed cookies (`procard_session`)
+- **5-step onboarding builder** — identity, games + roles, Riot connection, team history, publish
+- **Riot API integration** — RSO OAuth + manual Riot ID fallback, fetches LoL + Valorant ranks
+- **Region picker** — 11 Riot regions with correct routing cluster mapping, stored in DB per connection
+- **Dashboard** — split editor (left) + live phone preview (right), all sections editable inline, preview/editor toggle on all screen sizes, floating "← Back to edit" pill
+- **Public profile page** — `/{slug}` with Framer Motion stagger animations, live ranks, socials, team history, esports role badge, country badge, status badge
+- **18 esports roles** — player, coach, analyst, team_owner, team_manager, commentator, caster, host, media_manager, content_creator, journalist, tournament_organizer, referee, scout, agent, streamer, designer, observer
+- **Brand system fully applied** — all tokens in globals.css @theme, all UI primitives use semantic tokens, 12 rank tier colours, 3 animation keyframes
+- **No emojis anywhere** — game badges use styled text (LoL/VAL/CS2), social platforms use 3-letter labels, CardShell icons removed
+- **Professional landing page** — nav, hero ("Your verified esports identity"), 3-column value props grid, CTA, footer
+- **Login page** — clean Discord OAuth with SVG icon, permission disclosure
+- **UI primitives** — Button (4 variants), Input, TextArea, Select, Badge, StatusBadge, SlugInput
+
+### What's NOT built yet
+
+- Faceit (CS2) integration — API client not written
+- Cloudflare deployment — still using local better-sqlite3, no D1/KV/R2 bindings
+- Scheduled rank refresh cron — no Worker cron yet
+- Avatar upload — no R2 integration
+- GitHub Actions CI/CD — no workflows
+- Search/analytics/premium features — out of MVP scope
+
+### Key technical details
+
+- **Framework:** Next.js 16.2.6 with Turbopack, React 19.2.4, TS strict ES2017
+- **Tailwind v4.2.4:** `@theme` inline in `app/globals.css` (NO tailwind.config.js)
+- **Database:** better-sqlite3 at `.wrangler/state/procard.db`, auto-migrates from `migrations/0001_initial_schema.sql`
+- **Auth:** Stateless HMAC-signed cookies, cookie name `procard_session`, verified in `middleware.ts`
+- **Fonts:** Rajdhani (400/500/600/700 display), Inter (400/500/600 body), JetBrains Mono (400/500 mono)
+- **Brand spec:** `procard-brand-guidelines.md` is the authoritative design reference
+- **DB resets:** Schema changes require deleting `.wrangler/state/` DB files → user must re-login
+
+### File map (key files)
+
+| File | Purpose |
+|------|---------|
+| `app/globals.css` | Full @theme token system: bg layers, borders, text, accent, rank colours, animations |
+| `app/layout.tsx` | Root layout with Rajdhani + Inter + JetBrains Mono font imports |
+| `app/page.tsx` | Marketing landing page (nav, hero, value props, CTA, footer) |
+| `app/login/page.tsx` | Discord OAuth login with SVG icon |
+| `app/[slug]/page.tsx` | Public profile (server component, fetches data) |
+| `components/profile/ProfilePageClient.tsx` | Client wrapper with Framer Motion stagger |
+| `components/profile/LiveRanksSection.tsx` | Rank cards with tier-tinted bg/border via getRankHex() |
+| `components/dashboard/DashboardClient.tsx` | Split editor + phone preview, PROCARD.GG wordmark |
+| `components/dashboard/ConnectionsCard.tsx` | Region picker, disconnect, refresh, rank display |
+| `lib/api/riot.ts` | Riot API client (re-exports from riot-regions.ts) |
+| `lib/api/riot-regions.ts` | RiotRegion type + RIOT_REGIONS array (11 regions) |
+| `lib/constants/esports-roles.ts` | 18 role definitions |
+| `lib/utils/rank.ts` | getRankColour() (CSS vars) + getRankHex() (raw hex) |
+| `types/db.ts` | ProfileRow (has esports_role), GameConnectionRow (has region) |
+| `migrations/0001_initial_schema.sql` | Full schema with esports_role + region columns |
+
+### Design rules (enforced, do not deviate)
+
+- No gradients, no box-shadows (border-only elevation)
+- No emojis as icons (use styled text abbreviations)
+- Animations ≤ 300ms, no spring physics
+- Section labels: 9px uppercase, tracking 0.16em, text-muted
+- Rank data always in font-display (Rajdhani), never Inter
+- Cards: rounded-[10px], border-subtle, bg-surface
+- Accent used sparingly: CTAs and active states only
+- Copy: factual, direct, no exclamation marks, no gamer slang
+
+---
+
+## ORIGINAL SPEC (reference — some parts are already built)
+
+The sections below are the original product spec. Refer to the "CURRENT STATE" section above to know what's actually implemented vs. planned.
 
 ---
 

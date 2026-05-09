@@ -4,19 +4,31 @@ import type { ProfileStatus } from "@/types/db";
 
 const STATUS_CONFIG: Record<
   ProfileStatus,
-  { label: string; dotColour: string }
+  { label: string; dotColour: string; classes: string }
 > = {
-  open: { label: "Open to offers", dotColour: "#22c55e" },
-  on_team: { label: "On a team", dotColour: "#3b82f6" },
-  not_looking: { label: "Not looking", dotColour: "#64748b" },
+  open: {
+    label: "Open to offers",
+    dotColour: "var(--color-success)",
+    classes: "bg-success/10 text-success border-success/20",
+  },
+  on_team: {
+    label: "On a team",
+    dotColour: "var(--color-info)",
+    classes: "bg-info/10 text-info border-info/20",
+  },
+  not_looking: {
+    label: "Not looking",
+    dotColour: "var(--text-muted)",
+    classes: "bg-white/4 text-text-muted border-border-subtle",
+  },
 };
 
 export function StatusBadge({ status }: { status: ProfileStatus }) {
   const config = STATUS_CONFIG[status];
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-elevated px-3 py-1 text-xs font-medium text-text-secondary">
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${config.classes}`}>
       <span
-        className="h-2 w-2 rounded-full"
+        className="h-1.5 w-1.5 rounded-full"
         style={{ backgroundColor: config.dotColour }}
       />
       {config.label}

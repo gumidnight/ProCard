@@ -84,7 +84,7 @@ export function TeamHistoryCard({
     <CardShell
       title="Team & Match History"
       subtitle="Orgs, scrims, tournaments"
-      icon="🏆"
+      icon=""
       rightSlot={
         <span className="rounded-full bg-bg-base px-2 py-0.5 text-[10px] text-text-muted">
           {entries.length}

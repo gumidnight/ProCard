@@ -13,11 +13,11 @@ const variantClasses: Record<Variant, string> = {
   primary:
     "bg-accent text-white hover:bg-accent-light border border-transparent",
   secondary:
-    "bg-transparent text-text-primary border border-border-default hover:border-border-strong",
+    "bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated",
   ghost:
     "bg-transparent text-text-secondary hover:text-text-primary border border-transparent",
   danger:
-    "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20",
+    "bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -36,7 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || isLoading}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 ${variantClasses[variant]} ${className}`}
         {...props}
       >
         {isLoading && (

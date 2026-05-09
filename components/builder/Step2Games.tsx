@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 
 const GAMES = [
-  { id: "lol", name: "League of Legends", icon: "🎮" },
-  { id: "valorant", name: "Valorant", icon: "🎯" },
-  { id: "cs2", name: "CS2", icon: "🔫" },
+  { id: "lol", name: "League of Legends", short: "LoL" },
+  { id: "valorant", name: "Valorant", short: "VAL" },
+  { id: "cs2", name: "CS2", short: "CS2" },
 ] as const;
 
 const ROLES_BY_GAME: Record<string, string[]> = {
@@ -106,7 +106,7 @@ export function Step2Games({
                     : "border-border-subtle bg-bg-surface text-text-secondary hover:border-border-default"
                 }`}
               >
-                <span>{game.icon}</span>
+                <span className="font-display text-[11px] font-bold tracking-wide">{game.short}</span>
                 {game.name}
               </button>
             );

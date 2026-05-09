@@ -6,6 +6,7 @@ import { SlugInput } from "@/components/ui/SlugInput";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { COUNTRIES } from "@/lib/utils/country";
+import { ESPORTS_ROLES } from "@/lib/constants/esports-roles";
 import { sanitiseUsernameToSlug } from "@/lib/utils/slug";
 
 interface Step1Data {
@@ -14,6 +15,7 @@ interface Step1Data {
   country: string;
   tagline: string;
   bio: string;
+  esports_role: string;
 }
 
 interface Step1Props {
@@ -76,6 +78,16 @@ export function Step1Identity({
         options={COUNTRIES.map((c) => ({
           value: c.code,
           label: `${c.flag} ${c.name}`,
+        }))}
+      />
+
+      <Select
+        label="Esports Role"
+        value={data.esports_role}
+        onChange={(e) => update("esports_role", e.target.value)}
+        options={ESPORTS_ROLES.map((r) => ({
+          value: r.value,
+          label: r.label,
         }))}
       />
 

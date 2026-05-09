@@ -21,14 +21,14 @@ export async function generateMetadata({
   const profile = findProfileBySlug(slug);
 
   if (!profile) {
-    return { title: "Profile Not Found — RankCard" };
+    return { title: "Profile Not Found — ProCard" };
   }
 
   return {
-    title: `${profile.display_name} — RankCard`,
+    title: `${profile.display_name} — ProCard`,
     description:
       profile.bio ??
-      `${profile.display_name}'s competitive gaming profile on RankCard.`,
+      `${profile.display_name}'s competitive gaming profile on ProCard.`,
   };
 }
 

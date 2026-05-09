@@ -19,7 +19,7 @@ function TeamHistoryItem({ entry }: TeamHistoryItemProps) {
     .join(" – ");
 
   return (
-    <div className="rounded-lg border border-border-subtle bg-bg-surface p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-default">
+    <div className="rounded-[10px] border border-border-subtle bg-bg-surface p-4 transition-colors duration-[180ms] hover:border-border-default">
       <div className="flex items-start justify-between">
         <div>
           <p className="font-display text-sm font-semibold tracking-wide text-text-primary">
@@ -54,9 +54,9 @@ export function CompetitiveHistorySection({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-semibold tracking-wide text-text-secondary">
-        Competitive History
-      </h2>
+      <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+        COMPETITIVE HISTORY
+      </p>
       <div className="flex flex-col gap-2">
         {entries.map((entry) => (
           <TeamHistoryItem key={entry.id} entry={entry} />

@@ -1,11 +1,11 @@
-name = "rankcard"
+name = "procard"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 # D1 Database
 [[d1_databases]]
 binding = "DB"
-database_name = "rankcard-db"
+database_name = "procard-db"
 database_id = "local"                          # Replace with real ID after `wrangler d1 create`
 migrations_dir = "migrations"
 
@@ -17,7 +17,7 @@ id = "local"                                   # Replace with real ID after `wra
 # R2 Bucket
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "rankcard-assets"
+bucket_name = "procard-assets"
 
 # Cron trigger — rank refresh every 30 minutes
 [triggers]

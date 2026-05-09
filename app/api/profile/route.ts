@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { slug, display_name, country, tagline, bio } = body;
+  const { slug, display_name, country, tagline, bio, esports_role } = body;
 
   // Validate slug
   if (!slug || typeof slug !== "string") {
@@ -98,6 +98,12 @@ export async function POST(req: Request) {
       tagline: tagline ?? null,
       bio: bio ?? null,
     });
+
+    // Set esports_role separately via updateProfile (createProfile only handles core fields)
+    if (esports_role) {
+      const updated = updateProfile(profile.id, { esports_role });
+      return NextResponse.json({ profile: updated }, { status: 201 });
+    }
 
     return NextResponse.json({ profile }, { status: 201 });
   } catch (err: unknown) {
@@ -139,6 +145,7 @@ export async function PATCH(req: Request) {
     "tagline",
     "bio",
     "status",
+    "esports_role",
     "is_published",
   ] as const;
 

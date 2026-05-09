@@ -77,6 +77,7 @@ export function updateProfile(
       | "bio"
       | "avatar_key"
       | "status"
+      | "esports_role"
       | "is_published"
       | "published_at"
     >

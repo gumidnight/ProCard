@@ -8,7 +8,7 @@ const AUTH_API_PATHS = ["/api/profile", "/api/connect", "/api/ranks"];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const sessionCookie = req.cookies.get("rankcard_session")?.value;
+  const sessionCookie = req.cookies.get("procard_session")?.value;
 
   // Check if path needs protection
   const isProtectedPage = PROTECTED_PATHS.some((p) =>

@@ -80,7 +80,8 @@ async function refreshLolRank(
 ): Promise<{ tier: string; rank: string; leaguePoints: number } | null> {
   if (!conn.puuid) return null;
 
-  const lolRank = await fetchLolRankByPuuid(conn.puuid);
+  const region = (conn.region ?? "euw1") as Parameters<typeof fetchLolRankByPuuid>[1];
+  const lolRank = await fetchLolRankByPuuid(conn.puuid, region);
   const soloQ = lolRank.soloQueue;
 
   upsertGameConnection({

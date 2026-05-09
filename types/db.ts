@@ -18,6 +18,26 @@ export interface UserRow {
 
 export type ProfileStatus = "on_team" | "open" | "not_looking";
 
+export type EsportsRole =
+  | "player"
+  | "coach"
+  | "analyst"
+  | "team_owner"
+  | "team_manager"
+  | "commentator"
+  | "caster"
+  | "host"
+  | "media_manager"
+  | "content_creator"
+  | "journalist"
+  | "tournament_organizer"
+  | "referee"
+  | "scout"
+  | "agent"
+  | "streamer"
+  | "designer"
+  | "observer";
+
 export interface ProfileRow {
   id: string;
   user_id: string;
@@ -28,6 +48,7 @@ export interface ProfileRow {
   bio: string | null;
   avatar_key: string | null;
   status: ProfileStatus;
+  esports_role: EsportsRole | null;
   is_published: number; // 0 | 1
   published_at: number | null;
   created_at: number;
@@ -68,6 +89,8 @@ export interface GameConnectionRow {
   // Peak rank
   peak_rank_tier: string | null;
   peak_rank_division: string | null;
+
+  region: string | null;
 
   queue_type: QueueType;
   last_refreshed_at: number | null;

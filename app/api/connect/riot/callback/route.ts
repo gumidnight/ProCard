@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     let soloQ: { tier: string; rank: string; leaguePoints: number } | undefined;
     let summonerId: string | undefined;
     try {
-      const lolRank = await fetchLolRankByPuuid(account.puuid);
+      const lolRank = await fetchLolRankByPuuid(account.puuid, "na1");
       summonerId = lolRank.summoner.id;
       soloQ = lolRank.soloQueue;
     } catch {

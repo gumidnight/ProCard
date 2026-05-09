@@ -3,6 +3,7 @@
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import { getCountryFlag } from "@/lib/utils/country";
+import { ESPORTS_ROLES } from "@/lib/constants/esports-roles";
 import type { ProfileRow, RolePlayedRow } from "@/types/db";
 
 interface ProfileHeaderProps {
@@ -17,9 +18,9 @@ export function ProfileHeader({
   avatarUrl,
 }: ProfileHeaderProps) {
   return (
-    <div className="flex flex-col items-center gap-4 text-center">
+    <div className="flex flex-col items-center gap-5 text-center">
       {/* Avatar */}
-      <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-border-subtle bg-bg-elevated">
+      <div className="h-20 w-20 overflow-hidden rounded-full border border-border-default bg-bg-elevated">
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -27,7 +28,7 @@ export function ProfileHeader({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-3xl text-text-muted">
+          <div className="flex h-full w-full items-center justify-center font-display text-2xl font-bold text-text-muted">
             {profile.display_name.charAt(0).toUpperCase()}
           </div>
         )}
@@ -35,18 +36,24 @@ export function ProfileHeader({
 
       {/* Name + tagline */}
       <div>
-        <h1 className="font-display text-3xl font-bold tracking-wider">
+        <h1 className="font-display text-3xl font-bold tracking-[0.04em] text-text-primary md:text-4xl">
           {profile.display_name}
         </h1>
         {profile.tagline && (
-          <p className="mt-0.5 font-mono text-sm text-text-secondary">
+          <p className="mt-1 font-mono text-[12px] text-text-secondary">
             {profile.tagline}
           </p>
         )}
       </div>
 
-      {/* Country + roles + status */}
+      {/* Badges */}
       <div className="flex flex-wrap items-center justify-center gap-2">
+        {profile.esports_role && (
+          <Badge>
+            {ESPORTS_ROLES.find((r) => r.value === profile.esports_role)?.label ?? profile.esports_role}
+          </Badge>
+        )}
+
         {profile.country && (
           <Badge>
             {getCountryFlag(profile.country)} {profile.country}
@@ -64,7 +71,7 @@ export function ProfileHeader({
 
       {/* Bio */}
       {profile.bio && (
-        <p className="max-w-md text-sm text-text-secondary">
+        <p className="max-w-sm text-[13px] leading-relaxed text-text-secondary">
           {profile.bio}
         </p>
       )}

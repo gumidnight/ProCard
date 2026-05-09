@@ -7,7 +7,8 @@ import { TextArea } from "@/components/ui/TextArea";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { COUNTRIES } from "@/lib/utils/country";
-import type { ProfileRow } from "@/types/db";
+import { ESPORTS_ROLES } from "@/lib/constants/esports-roles";
+import type { ProfileRow, EsportsRole } from "@/types/db";
 
 interface ProfileEditCardProps {
   profile: ProfileRow;
@@ -24,6 +25,7 @@ export function ProfileEditCard({
     country: profile.country ?? "",
     tagline: profile.tagline ?? "",
     bio: profile.bio ?? "",
+    esports_role: profile.esports_role ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>();
@@ -34,7 +36,8 @@ export function ProfileEditCard({
     draft.slug !== profile.slug ||
     draft.country !== (profile.country ?? "") ||
     draft.tagline !== (profile.tagline ?? "") ||
-    draft.bio !== (profile.bio ?? "");
+    draft.bio !== (profile.bio ?? "") ||
+    draft.esports_role !== (profile.esports_role ?? "");
 
   const handleSave = async () => {
     setSaving(true);
@@ -49,6 +52,7 @@ export function ProfileEditCard({
           country: draft.country || null,
           tagline: draft.tagline || null,
           bio: draft.bio || null,
+          esports_role: draft.esports_role || null,
         }),
       });
       const data = await res.json();
@@ -85,6 +89,10 @@ export function ProfileEditCard({
           ? ((value as string) || null)
           : draft.tagline || null,
       bio: key === "bio" ? ((value as string) || null) : draft.bio || null,
+      esports_role:
+        key === "esports_role"
+          ? (((value as string) || null) as EsportsRole | null)
+          : (draft.esports_role || null) as EsportsRole | null,
     });
   };
 
@@ -92,7 +100,7 @@ export function ProfileEditCard({
     <CardShell
       title="Identity"
       subtitle="Display name, tagline, country, bio"
-      icon="🪪"
+      icon=""
     >
       <div className="flex flex-col gap-4">
         <Input
@@ -111,7 +119,7 @@ export function ProfileEditCard({
               e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""),
             )
           }
-          hint={`rankcard.gg/${draft.slug}`}
+          hint={`procard.gg/${draft.slug}`}
           maxLength={24}
         />
 
@@ -131,6 +139,16 @@ export function ProfileEditCard({
           options={COUNTRIES.map((c) => ({
             value: c.code,
             label: `${c.flag} ${c.name}`,
+          }))}
+        />
+
+        <Select
+          label="Esports Role"
+          value={draft.esports_role}
+          onChange={(e) => updateField("esports_role", e.target.value)}
+          options={ESPORTS_ROLES.map((r) => ({
+            value: r.value,
+            label: r.label,
           }))}
         />
 

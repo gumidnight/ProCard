@@ -4,40 +4,77 @@
 
 const RANK_COLOURS: Record<string, string> = {
   // LoL / General
-  IRON: "#ba7517",
-  BRONZE: "#ba7517",
-  SILVER: "#888799",
-  GOLD: "#c9a227",
-  PLATINUM: "#0f8a6a",
-  EMERALD: "#1aad8a",
-  DIAMOND: "#2a7fbf",
-  MASTER: "#9d48e0",
-  GRANDMASTER: "#c93030",
-  CHALLENGER: "#d4af37",
+  IRON: "var(--rank-iron)",
+  BRONZE: "var(--rank-bronze)",
+  SILVER: "var(--rank-silver)",
+  GOLD: "var(--rank-gold)",
+  PLATINUM: "var(--rank-platinum)",
+  EMERALD: "var(--rank-emerald)",
+  DIAMOND: "var(--rank-diamond)",
+  MASTER: "var(--rank-master)",
+  GRANDMASTER: "var(--rank-grandmaster)",
+  CHALLENGER: "var(--rank-challenger)",
 
   // Valorant
-  IMMORTAL: "#9d48e0",
-  RADIANT: "#e8b84b",
-  ASCENDANT: "#1aad8a",
+  IMMORTAL: "var(--rank-immortal)",
+  RADIANT: "var(--rank-radiant)",
+  ASCENDANT: "var(--rank-emerald)",
 
   // CS2 / Faceit
-  "GLOBAL ELITE": "#d4af37",
-  FACEIT_10: "#d4af37",
-  FACEIT_9: "#c93030",
-  FACEIT_8: "#9d48e0",
-  FACEIT_7: "#2a7fbf",
-  FACEIT_6: "#1aad8a",
-  FACEIT_5: "#0f8a6a",
-  FACEIT_4: "#c9a227",
-  FACEIT_3: "#888799",
-  FACEIT_2: "#ba7517",
-  FACEIT_1: "#ba7517",
+  "GLOBAL ELITE": "var(--rank-global)",
+  FACEIT_10: "var(--rank-challenger)",
+  FACEIT_9: "var(--rank-grandmaster)",
+  FACEIT_8: "var(--rank-master)",
+  FACEIT_7: "var(--rank-diamond)",
+  FACEIT_6: "var(--rank-emerald)",
+  FACEIT_5: "var(--rank-platinum)",
+  FACEIT_4: "var(--rank-gold)",
+  FACEIT_3: "var(--rank-silver)",
+  FACEIT_2: "var(--rank-bronze)",
+  FACEIT_1: "var(--rank-bronze)",
 };
 
 export function getRankColour(tier: string | null): string {
+  if (!tier) return "var(--rank-silver)";
+  const key = tier.toUpperCase().trim();
+  return RANK_COLOURS[key] ?? "var(--rank-silver)";
+}
+
+// Raw hex values for inline styles that need alpha manipulation (e.g. tinting)
+const RANK_HEX: Record<string, string> = {
+  IRON: "#8a8a8a",
+  BRONZE: "#BA7517",
+  SILVER: "#888799",
+  GOLD: "#C9A227",
+  PLATINUM: "#0F8A6A",
+  EMERALD: "#1AAD8A",
+  DIAMOND: "#2A7FBF",
+  MASTER: "#9D48E0",
+  GRANDMASTER: "#C93030",
+  CHALLENGER: "#E8B84B",
+  IMMORTAL: "#9D48E0",
+  RADIANT: "#E8B84B",
+  ASCENDANT: "#1AAD8A",
+  "GLOBAL ELITE": "#E8B84B",
+};
+
+export function getRankHex(tier: string | null): string {
   if (!tier) return "#888799";
   const key = tier.toUpperCase().trim();
-  return RANK_COLOURS[key] ?? "#888799";
+  // Handle FACEIT_ levels
+  if (key.startsWith("FACEIT_")) {
+    const level = parseInt(key.replace("FACEIT_", ""), 10);
+    if (level >= 10) return RANK_HEX.CHALLENGER;
+    if (level >= 9) return RANK_HEX.GRANDMASTER;
+    if (level >= 8) return RANK_HEX.MASTER;
+    if (level >= 7) return RANK_HEX.DIAMOND;
+    if (level >= 6) return RANK_HEX.EMERALD;
+    if (level >= 5) return RANK_HEX.PLATINUM;
+    if (level >= 4) return RANK_HEX.GOLD;
+    if (level >= 3) return RANK_HEX.SILVER;
+    return RANK_HEX.BRONZE;
+  }
+  return RANK_HEX[key] ?? "#888799";
 }
 
 /**

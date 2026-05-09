@@ -21,6 +21,7 @@ export function upsertGameConnection(data: {
   rank_division?: string | null;
   lp_rr?: number | null;
   skill_level?: number | null;
+  region?: string | null;
   queue_type?: GameConnectionRow["queue_type"];
 }): GameConnectionRow {
   ensureMigrated();
@@ -43,10 +44,11 @@ export function upsertGameConnection(data: {
            riot_token_expires_at = COALESCE(?, riot_token_expires_at),
            faceit_player_id = COALESCE(?, faceit_player_id),
            faceit_nickname = COALESCE(?, faceit_nickname),
-           rank_tier = COALESCE(?, rank_tier),
-           rank_division = COALESCE(?, rank_division),
-           lp_rr = COALESCE(?, lp_rr),
+           rank_tier = ?,
+           rank_division = ?,
+           lp_rr = ?,
            skill_level = COALESCE(?, skill_level),
+           region = COALESCE(?, region),
            queue_type = COALESCE(?, queue_type),
            last_refreshed_at = unixepoch(),
            updated_at = unixepoch()
@@ -64,6 +66,7 @@ export function upsertGameConnection(data: {
       data.rank_division ?? null,
       data.lp_rr ?? null,
       data.skill_level ?? null,
+      data.region ?? null,
       data.queue_type ?? null,
       data.profile_id,
       data.game,
@@ -80,9 +83,9 @@ export function upsertGameConnection(data: {
        (id, profile_id, game, puuid, account_name, summoner_id,
         riot_access_token, riot_refresh_token, riot_token_expires_at,
         faceit_player_id, faceit_nickname,
-        rank_tier, rank_division, lp_rr, skill_level, queue_type,
+        rank_tier, rank_division, lp_rr, skill_level, region, queue_type,
         last_refreshed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())`,
   ).run(
     data.id,
     data.profile_id,
@@ -99,6 +102,7 @@ export function upsertGameConnection(data: {
     data.rank_division ?? null,
     data.lp_rr ?? null,
     data.skill_level ?? null,
+    data.region ?? null,
     data.queue_type ?? "RANKED_SOLO_5x5",
   );
 

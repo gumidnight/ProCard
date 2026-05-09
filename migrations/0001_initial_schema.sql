@@ -1,5 +1,5 @@
 -- ============================================================
--- RankCard — D1 Initial Schema
+-- ProCard — D1 Initial Schema
 -- Migration: 0001_initial_schema.sql
 -- UUIDs generated in application code via crypto.randomUUID()
 -- Booleans stored as INTEGER (0/1)
@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_key   TEXT,
   status       TEXT    NOT NULL DEFAULT 'not_looking'
                        CHECK (status IN ('on_team', 'open', 'not_looking')),
+  esports_role TEXT,
   is_published INTEGER NOT NULL DEFAULT 0,
   published_at INTEGER,
   created_at   INTEGER NOT NULL DEFAULT (unixepoch()),
@@ -79,6 +80,9 @@ CREATE TABLE IF NOT EXISTS game_connections (
   -- Peak rank
   peak_rank_tier        TEXT,
   peak_rank_division    TEXT,
+
+  -- Riot region (na1, euw1, eun1, kr, ...) — needed for per-region API calls
+  region                TEXT,
 
   queue_type            TEXT    NOT NULL DEFAULT 'RANKED_SOLO_5x5'
                                 CHECK (queue_type IN (

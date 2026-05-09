@@ -65,8 +65,8 @@ export function DashboardClient({
       {/* Top bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border-subtle bg-bg-base/80 px-6 py-3 backdrop-blur">
         <div className="flex items-center gap-3">
-          <span className="font-display text-xl font-bold tracking-wider text-text-primary">
-            RANKCARD
+          <span className="font-display text-xl font-bold tracking-[0.06em] text-text-primary">
+            PROCARD<span className="text-accent-light">.GG</span>
           </span>
           <span className="hidden text-xs text-text-muted sm:inline">
             / dashboard
@@ -79,8 +79,8 @@ export function DashboardClient({
             className="hidden items-center gap-2 rounded-lg border border-border-subtle bg-bg-surface px-3 py-1.5 font-mono text-xs text-text-secondary transition-colors hover:border-border-default hover:text-text-primary md:flex"
             title="Copy profile URL"
           >
-            <span>🔗</span>
-            <span>rankcard.gg/{profile.slug}</span>
+            <span className="text-xs text-text-muted">↗</span>
+            <span>procard.gg/{profile.slug}</span>
           </button>
 
           <a
@@ -94,7 +94,7 @@ export function DashboardClient({
 
           <button
             onClick={() => setPreviewOpen((p) => !p)}
-            className="rounded-lg border border-border-subtle bg-bg-surface px-3 py-1.5 text-xs text-text-secondary transition-colors hover:border-border-default hover:text-text-primary lg:hidden"
+            className="rounded-lg border border-border-subtle bg-bg-surface px-3 py-1.5 text-xs text-text-secondary transition-colors hover:border-border-default hover:text-text-primary"
           >
             {previewOpen ? "Editor" : "Preview"}
           </button>
@@ -124,15 +124,15 @@ export function DashboardClient({
         {/* Left: editor */}
         <section
           className={`flex-1 overflow-y-auto px-6 py-8 lg:max-w-2xl ${
-            previewOpen ? "hidden lg:block" : "block"
+            previewOpen ? "hidden" : "block"
           }`}
         >
           <div className="mx-auto flex max-w-xl flex-col gap-6">
             <div>
-              <h1 className="font-display text-2xl font-bold tracking-wide text-text-primary">
+              <h1 className="font-display text-2xl font-bold tracking-[0.03em] text-text-primary">
                 Build your card
               </h1>
-              <p className="mt-1 text-sm text-text-muted">
+              <p className="mt-1 text-[13px] text-text-muted">
                 Live preview updates as you edit.
               </p>
             </div>
@@ -166,10 +166,21 @@ export function DashboardClient({
 
         {/* Right: live preview */}
         <aside
-          className={`flex-1 overflow-y-auto border-l border-border-subtle bg-bg-subtle/30 ${
+          className={`relative flex-1 overflow-y-auto border-l border-border-subtle bg-bg-subtle/30 ${
             previewOpen ? "block" : "hidden lg:block"
           }`}
         >
+          {/* Floating back-to-edit button (visible whenever preview is in focus mode) */}
+          {previewOpen && (
+            <button
+              onClick={() => setPreviewOpen(false)}
+              className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 rounded-full border border-border-default bg-bg-surface px-5 py-3 text-sm font-medium text-text-primary shadow-lg shadow-black/40 transition-colors hover:bg-bg-elevated"
+            >
+              <span aria-hidden>←</span>
+              <span>Back to edit</span>
+            </button>
+          )}
+
           <LivePreview
             profile={profile}
             gameConnections={gameConnections}

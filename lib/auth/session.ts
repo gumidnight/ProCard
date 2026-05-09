@@ -10,7 +10,7 @@ import { findUserById } from "@/lib/db/users";
 // HMAC prevents tampering; createdAt enforces TTL.
 // ---------------------------------------------------------------------------
 
-const SESSION_COOKIE = "rankcard_session";
+const SESSION_COOKIE = "procard_session";
 const SESSION_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
 
 /**
