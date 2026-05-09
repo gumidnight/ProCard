@@ -1,21 +1,19 @@
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth/session";
+import { findProfileByUserId } from "@/lib/db/profiles";
+import { OnboardingShell } from "@/components/builder/OnboardingShell";
 
 export default async function OnboardingPage() {
   const user = await getSessionUser();
+  if (!user) redirect("/login");
+
+  // If they already have a profile, send to dashboard
+  const profile = findProfileByUserId(user.id);
+  if (profile) redirect("/dashboard");
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-4">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <h1 className="font-display text-3xl font-bold tracking-wide">
-          Welcome, {user?.username}
-        </h1>
-        <p className="text-text-secondary">
-          Let&apos;s build your RankCard profile.
-        </p>
-        <div className="mt-4 rounded-lg border border-border-subtle bg-bg-surface px-6 py-3 text-sm text-text-muted">
-          Profile builder coming next — auth is working!
-        </div>
-      </div>
+    <main className="flex flex-1 flex-col items-center py-8">
+      <OnboardingShell username={user.username} userId={user.id} />
     </main>
   );
 }
