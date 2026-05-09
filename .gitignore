@@ -33,6 +33,14 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Local secrets — NEVER commit
+.dev.vars
+
+# Wrangler / Cloudflare local state
+.wrangler/
+.open-next/
+.worker-next/
+
 # vercel
 .vercel
 
