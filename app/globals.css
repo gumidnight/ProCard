@@ -1,111 +1,238 @@
 @import "tailwindcss";
 
 :root {
-  /* Backgrounds — layered dark system */
-  --bg-base:      #07070f;
-  --bg-surface:   #0f0f1c;
-  --bg-elevated:  #161625;
-  --bg-subtle:    #1e1e30;
+  /* Surfaces — lifted ~9 lightness points vs old palette */
+  --surface-0: #0b0d12; /* page bg */
+  --surface-1: #14171f; /* primary card */
+  --surface-2: #1c2029; /* hover, nested card */
+  --surface-3: #262b36; /* input, button-bg, divider */
 
-  /* Borders */
-  --border-subtle:  rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.11);
-  --border-strong:  rgba(255, 255, 255, 0.20);
+  /* Borders — brightened so card edges are visible */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.24);
 
   /* Text */
-  --text-primary:   #f0f0f8;
-  --text-secondary: #8888a8;
-  --text-muted:     #44445a;
+  --text-primary: #f4f5f9;
+  --text-secondary: #a1a6b5;
+  --text-muted: #6b7180;
 
-  /* Accent — use sparingly */
-  --accent:        #534AB7;
-  --accent-light:  #7b72d4;
-  --accent-dark:   #3a3380;
-  --accent-subtle: rgba(83, 74, 183, 0.12);
+  /* Accent — Faceit-style orange */
+  --accent: #ff5c00;
+  --accent-hover: #ff7a33;
+  --accent-active: #e04a00;
+  --accent-on: #0b0d12; /* text colour on top of accent */
+  --accent-soft: rgba(255, 92, 0, 0.12);
+  --accent-ring: rgba(255, 92, 0, 0.4);
 
   /* Semantic */
-  --color-success: #23a55a;
-  --color-danger:  #e05252;
-  --color-warning: #E8B84B;
-  --color-info:    #2A7FBF;
+  --color-success: #28c770;
+  --color-danger: #f0524f;
+  --color-warning: #f5c518;
+  --color-info: #4da3ff;
 
-  /* Rank colours */
-  --rank-iron:        #8a8a8a;
-  --rank-bronze:      #BA7517;
-  --rank-silver:      #888799;
-  --rank-gold:        #C9A227;
-  --rank-platinum:    #0F8A6A;
-  --rank-emerald:     #1AAD8A;
-  --rank-diamond:     #2A7FBF;
-  --rank-master:      #9D48E0;
-  --rank-grandmaster: #C93030;
-  --rank-challenger:  #E8B84B;
-  --rank-immortal:    #9D48E0;
-  --rank-radiant:     #E8B84B;
-  --rank-global:      #E8B84B;
+  /* Rank tier colours — preserved */
+  --rank-iron: #8a8a8a;
+  --rank-bronze: #ba7517;
+  --rank-silver: #888799;
+  --rank-gold: #c9a227;
+  --rank-platinum: #0f8a6a;
+  --rank-emerald: #1aad8a;
+  --rank-diamond: #2a7fbf;
+  --rank-master: #9d48e0;
+  --rank-grandmaster: #c93030;
+  --rank-challenger: #e8b84b;
+  --rank-immortal: #9d48e0;
+  --rank-radiant: #e8b84b;
+  --rank-global: #e8b84b;
 
-  /* Timing */
-  --duration-fast:   100ms;
-  --duration-normal: 180ms;
-  --duration-slow:   280ms;
+  /* Type scale — 7 sizes, ratio ~1.2 */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 44px;
+
+  /* Spacing — 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* Motion */
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
-  --color-bg-base: var(--bg-base);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-bg-subtle: var(--bg-subtle);
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+
   --color-border-subtle: var(--border-subtle);
   --color-border-default: var(--border-default);
   --color-border-strong: var(--border-strong);
+
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+
   --color-accent: var(--accent);
-  --color-accent-light: var(--accent-light);
-  --color-accent-dark: var(--accent-dark);
-  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+
   --color-success: var(--color-success);
   --color-danger: var(--color-danger);
   --color-warning: var(--color-warning);
   --color-info: var(--color-info);
+
   --font-display: var(--font-rajdhani);
   --font-body: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
-  --radius-card: 10px;
+
+  --radius-card: var(--radius-lg);
 }
 
 body {
-  background: var(--bg-base);
+  background: var(--surface-0);
   color: var(--text-primary);
-  font-family: var(--font-body, 'Inter', sans-serif);
+  font-family: var(--font-body, "Inter", sans-serif);
 }
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  /* Always reserve the scrollbar gutter so short pages (e.g. the Appearance
+     tab) aren't wider than scrolling pages — otherwise the layout shifts
+     horizontally when navigating between tabs. */
+  scrollbar-gutter: stable;
+}
+
+/* Offset anchor targets so the sticky nav doesn't cover them */
+[id] {
+  scroll-margin-top: 72px;
 }
 
 /* Selection colour */
 ::selection {
   background: var(--accent);
-  color: var(--text-primary);
+  color: var(--accent-on);
+}
+
+/* Global focus ring */
+:where(a, button):focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* Animations */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes livePulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 @keyframes successFlash {
-  0%   { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.4); }
-  70%  { box-shadow: 0 0 0 8px rgba(35, 165, 90, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(35, 165, 90, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(35, 165, 90, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(35, 165, 90, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(35, 165, 90, 0);
+  }
+}
+
+/* Hero card sweep — accent line travels top→bottom periodically */
+@keyframes sheenSweep {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+}
+
+/* Marquee — horizontal infinite scroll */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Accent ring around hero avatar — slow rotation gradient */
+@keyframes accentSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Subtle grid drift behind hero */
+@keyframes gridDrift {
+  from {
+    background-position:
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      80px 80px,
+      80px 80px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reduce-motion-safe,
+  .reduce-motion-safe *,
+  .reduce-motion-safe *::before,
+  .reduce-motion-safe *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

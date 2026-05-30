@@ -3,11 +3,15 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth/session";
 import { findProfileByUserId } from "@/lib/db/profiles";
-import { upsertGameConnection, deleteGameConnection } from "@/lib/db/game-connections";
+import {
+  upsertGameConnection,
+  deleteGameConnectionById,
+} from "@/lib/db/game-connections";
 import {
   hasRsoCredentials,
   getRsoAuthUrl,
   connectByRiotId,
+  fetchTftRankByPuuid,
   RIOT_REGIONS,
   type RiotRegion,
 } from "@/lib/api/riot";
@@ -15,9 +19,9 @@ import {
 // ---------------------------------------------------------------------------
 // GET  /api/connect/riot  — Initiate RSO OAuth redirect
 // POST /api/connect/riot  — Manual connect via Riot ID (gameName#tagLine)
+// DELETE /api/connect/riot?id=  — Remove a specific connection by ID
 // ---------------------------------------------------------------------------
 
-/** RSO OAuth redirect (only works when RIOT_CLIENT_ID/SECRET are set) */
 export async function GET() {
   if (!hasRsoCredentials()) {
     return NextResponse.json(
@@ -39,7 +43,11 @@ export async function GET() {
   return NextResponse.redirect(getRsoAuthUrl(state));
 }
 
-/** Manual connect: { riotId: "Name#TAG", games: ["lol"] } */
+/**
+ * POST /api/connect/riot
+ * Body: { riotId: "Name#TAG", region: "euw1", game: "lol"|"valorant"|"tft" }
+ * Legacy body: { riotId, region, games: ["lol","valorant"] } — still supported for onboarding.
+ */
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
@@ -58,68 +66,92 @@ export async function POST(req: NextRequest) {
 
   const [gameName, tagLine] = riotId.split("#");
   if (!gameName || !tagLine) {
-    return NextResponse.json(
-      { error: "Invalid Riot ID format" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid Riot ID format" }, { status: 400 });
   }
 
   const profile = findProfileByUserId(user.id);
   if (!profile) {
-    return NextResponse.json(
-      { error: "Create a profile first" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Create a profile first" }, { status: 400 });
   }
 
-  // Validate region
   const region: RiotRegion = body.region ?? "euw1";
   if (!RIOT_REGIONS.find((r) => r.value === region)) {
-    return NextResponse.json(
-      { error: "Invalid region" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid region" }, { status: 400 });
+  }
+
+  // Normalise: accept either `game` (single) or `games` (array, legacy onboarding)
+  const games: string[] = body.game
+    ? [body.game]
+    : Array.isArray(body.games)
+      ? body.games
+      : ["lol"];
+
+  const validGames = new Set(["lol", "valorant", "tft"]);
+  for (const g of games) {
+    if (!validGames.has(g)) {
+      return NextResponse.json({ error: `Unsupported game: ${g}` }, { status: 400 });
+    }
   }
 
   try {
     const result = await connectByRiotId(gameName, tagLine, region);
-
-    // Determine which games to connect (default: whatever they selected)
-    const games: string[] = body.games ?? ["lol"];
-
     const connections = [];
+    let lolError: string | undefined;
 
-    // LoL connection
-    if (games.includes("lol")) {
-      const soloQ = result.lolRank?.soloQueue;
-      const conn = upsertGameConnection({
-        id: crypto.randomUUID(),
-        profile_id: profile.id,
-        game: "lol",
-        puuid: result.account.puuid,
-        account_name: `${result.account.gameName}#${result.account.tagLine}`,
-        summoner_id: result.lolRank?.summoner.id ?? null,
-        region,
-        rank_tier: soloQ?.tier ?? null,
-        rank_division: soloQ?.rank ?? null,
-        lp_rr: soloQ?.leaguePoints ?? null,
-        queue_type: "RANKED_SOLO_5x5",
-      });
-      connections.push(conn);
-    }
+    for (const game of games) {
+      if (game === "lol") {
+        const soloQ = result.lolRank?.soloQueue;
+        if (!result.lolRank && result.lolError) {
+          lolError = result.lolError;
+        }
+        const conn = upsertGameConnection({
+          id: crypto.randomUUID(),
+          profile_id: profile.id,
+          game: "lol",
+          puuid: result.account.puuid,
+          account_name: `${result.account.gameName}#${result.account.tagLine}`,
+          summoner_id: result.lolRank?.summoner.id ?? null,
+          region,
+          rank_tier: soloQ?.tier ?? null,
+          rank_division: soloQ?.rank ?? null,
+          lp_rr: soloQ?.leaguePoints ?? null,
+          queue_type: "RANKED_SOLO_5x5",
+        });
+        connections.push(conn);
+      }
 
-    // Valorant connection — store PUUID for when rank fetch is available
-    if (games.includes("valorant")) {
-      const conn = upsertGameConnection({
-        id: crypto.randomUUID(),
-        profile_id: profile.id,
-        game: "valorant",
-        puuid: result.account.puuid,
-        account_name: `${result.account.gameName}#${result.account.tagLine}`,
-        region,
-        queue_type: "competitive",
-      });
-      connections.push(conn);
+      if (game === "valorant") {
+        const conn = upsertGameConnection({
+          id: crypto.randomUUID(),
+          profile_id: profile.id,
+          game: "valorant",
+          puuid: result.account.puuid,
+          account_name: `${result.account.gameName}#${result.account.tagLine}`,
+          region,
+          queue_type: "competitive",
+        });
+        connections.push(conn);
+      }
+
+      if (game === "tft") {
+        const tftEntry = await fetchTftRankByPuuid(result.account.puuid, region).catch(
+          () => null,
+        );
+        const conn = upsertGameConnection({
+          id: crypto.randomUUID(),
+          profile_id: profile.id,
+          game: "tft",
+          puuid: result.account.puuid,
+          account_name: `${result.account.gameName}#${result.account.tagLine}`,
+          summoner_id: null,
+          region,
+          rank_tier: tftEntry?.tier ?? null,
+          rank_division: tftEntry?.rank ?? null,
+          lp_rr: tftEntry?.leaguePoints ?? null,
+          queue_type: "RANKED_TFT",
+        });
+        connections.push(conn);
+      }
     }
 
     return NextResponse.json({
@@ -128,30 +160,36 @@ export async function POST(req: NextRequest) {
         tagLine: result.account.tagLine,
       },
       region,
-      lolError: result.lolError,
+      lolError,
       connections,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to connect Riot account";
+    const message = err instanceof Error ? err.message : "Failed to connect Riot account";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
 
-/** Disconnect Riot accounts */
-export async function DELETE() {
+/**
+ * DELETE /api/connect/riot?id=<connectionId>
+ * Removes a specific game connection by its ID.
+ */
+export async function DELETE(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "id is required" }, { status: 400 });
+  }
+
+  // Ownership check via profile
   const profile = findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile" }, { status: 400 });
   }
 
-  deleteGameConnection(profile.id, "lol");
-  deleteGameConnection(profile.id, "valorant");
-
+  deleteGameConnectionById(id);
   return NextResponse.json({ ok: true });
 }

@@ -10,13 +10,7 @@ import { Step4History } from "./Step4History";
 import { Step5Publish } from "./Step5Publish";
 import type { ProfileStatus, SocialPlatform } from "@/types/db";
 
-const STEP_LABELS = [
-  "Identity",
-  "Games",
-  "Connections",
-  "History",
-  "Publish",
-];
+const STEP_LABELS = ["Identity", "Games", "Connections", "History", "Publish"];
 
 interface OnboardingShellProps {
   username: string;
@@ -74,9 +68,7 @@ const INITIAL_STATE: OnboardingState = {
   socials: [],
 };
 
-export function OnboardingShell({
-  username,
-}: OnboardingShellProps) {
+export function OnboardingShell({ username }: OnboardingShellProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [state, setState] = useState<OnboardingState>(INITIAL_STATE);
@@ -86,22 +78,19 @@ export function OnboardingShell({
   const next = useCallback(() => setStep((s) => Math.min(s + 1, 4)), []);
   const back = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
 
-  const handleConnect = useCallback(
-    (game: string, data?: { nickname?: string }) => {
-      setState((prev) => ({
-        ...prev,
-        connections: {
-          ...prev.connections,
-          [game]: {
-            connected: true,
-            accountName: data?.nickname,
-            nickname: data?.nickname,
-          },
+  const handleConnect = useCallback((game: string, data?: { nickname?: string }) => {
+    setState((prev) => ({
+      ...prev,
+      connections: {
+        ...prev.connections,
+        [game]: {
+          connected: true,
+          accountName: data?.nickname,
+          nickname: data?.nickname,
         },
-      }));
-    },
-    [],
-  );
+      },
+    }));
+  }, []);
 
   const handlePublish = async () => {
     setIsPublishing(true);
@@ -148,9 +137,7 @@ export function OnboardingShell({
       }
 
       // 4. Save social links (filter empty)
-      const filledSocials = state.socials.filter(
-        (s) => s.handle_or_url.trim(),
-      );
+      const filledSocials = state.socials.filter((s) => s.handle_or_url.trim());
       if (filledSocials.length > 0) {
         await fetch("/api/profile/socials", {
           method: "POST",
@@ -185,15 +172,13 @@ export function OnboardingShell({
           {STEP_LABELS.map((label, i) => (
             <span
               key={label}
-              className={
-                i <= step ? "text-accent-light font-medium" : ""
-              }
+              className={i <= step ? "text-accent-hover font-medium" : ""}
             >
               {label}
             </span>
           ))}
         </div>
-        <div className="mt-2 h-1 w-full rounded-full bg-bg-subtle">
+        <div className="mt-2 h-1 w-full rounded-full bg-surface-3">
           <div
             className="h-1 rounded-full bg-accent transition-all duration-300"
             style={{ width: `${((step + 1) / 5) * 100}%` }}
@@ -258,9 +243,7 @@ export function OnboardingShell({
           {step === 3 && (
             <Step4History
               data={{ entries: state.teamHistory }}
-              onChange={(d) =>
-                setState((s) => ({ ...s, teamHistory: d.entries }))
-              }
+              onChange={(d) => setState((s) => ({ ...s, teamHistory: d.entries }))}
               selectedGames={state.selectedGames}
               onNext={next}
               onBack={back}

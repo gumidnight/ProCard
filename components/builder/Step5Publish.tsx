@@ -60,27 +60,19 @@ export function Step5Publish({
     const existing = data.socials.find((s) => s.platform === platform);
     const socials = existing
       ? data.socials.map((s) =>
-          s.platform === platform
-            ? { ...s, handle_or_url: value }
-            : s,
+          s.platform === platform ? { ...s, handle_or_url: value } : s,
         )
-      : [
-          ...data.socials,
-          { platform, handle_or_url: value },
-        ];
+      : [...data.socials, { platform, handle_or_url: value }];
     onChange({ ...data, socials });
   };
 
   const getSocialValue = (platform: SocialPlatform) =>
-    data.socials.find((s) => s.platform === platform)?.handle_or_url ??
-    "";
+    data.socials.find((s) => s.platform === platform)?.handle_or_url ?? "";
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-display text-2xl font-bold tracking-wide">
-          Almost There
-        </h2>
+        <h2 className="font-display text-2xl font-bold tracking-wide">Almost There</h2>
         <p className="mt-1 text-sm text-text-secondary">
           Set your availability and add social links.
         </p>
@@ -88,9 +80,7 @@ export function Step5Publish({
 
       {/* Availability status */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-text-secondary">
-          Availability
-        </label>
+        <label className="text-sm font-medium text-text-secondary">Availability</label>
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map((opt) => (
             <button
@@ -98,8 +88,8 @@ export function Step5Publish({
               onClick={() => onChange({ ...data, status: opt.value })}
               className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
                 data.status === opt.value
-                  ? "border-accent bg-accent/10 text-accent-light"
-                  : "border-border-subtle bg-bg-surface text-text-secondary hover:border-border-default"
+                  ? "border-accent bg-accent/10 text-accent-hover"
+                  : "border-border-subtle bg-surface-1 text-text-secondary hover:border-border-default"
               }`}
             >
               <StatusBadge status={opt.value} />
@@ -127,9 +117,7 @@ export function Step5Publish({
               </span>
               <Input
                 value={getSocialValue(platform.id)}
-                onChange={(e) =>
-                  updateSocial(platform.id, e.target.value)
-                }
+                onChange={(e) => updateSocial(platform.id, e.target.value)}
                 placeholder={`${platform.label} — ${platform.placeholder}`}
                 className="flex-1"
               />
@@ -139,11 +127,9 @@ export function Step5Publish({
       </div>
 
       {/* Preview URL */}
-      <div className="rounded-lg border border-border-subtle bg-bg-surface p-4 text-center">
+      <div className="rounded-lg border border-border-subtle bg-surface-1 p-4 text-center">
         <p className="text-xs text-text-muted">Your profile will be at</p>
-        <p className="mt-1 font-mono text-sm text-accent-light">
-          procard.gg/{slug}
-        </p>
+        <p className="mt-1 font-mono text-sm text-accent-hover">procard.gg/{slug}</p>
       </div>
 
       <div className="flex justify-between pt-2">

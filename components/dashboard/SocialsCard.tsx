@@ -1,15 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type ComponentType, type SVGProps } from "react";
+import {
+  SiDiscord,
+  SiTwitch,
+  SiX,
+  SiYoutube,
+  SiInstagram,
+  SiTiktok,
+  SiKick,
+} from "react-icons/si";
+import { Globe, BookOpen, BarChart3, Target } from "lucide-react";
 import { CardShell } from "./CardShell";
 import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
+import { SaveStatus, type SaveState } from "./SaveStatus";
 import type { SocialLinkRow, SocialPlatform } from "@/types/db";
 
 interface SocialsCardProps {
   socials: SocialLinkRow[];
   onUpdate: (socials: SocialLinkRow[]) => void;
 }
+
+type IconCmp = ComponentType<SVGProps<SVGSVGElement> & { size?: number }>;
+
+const SOCIAL_ICONS: Record<SocialPlatform, IconCmp> = {
+  twitch: SiTwitch,
+  youtube: SiYoutube,
+  kick: SiKick,
+  twitter: SiX,
+  instagram: SiInstagram,
+  tiktok: SiTiktok,
+  discord: SiDiscord,
+  liquipedia: BookOpen as IconCmp,
+  opgg: BarChart3 as IconCmp,
+  tracker: Target as IconCmp,
+  website: Globe as IconCmp,
+};
 
 const SOCIAL_PLATFORMS: {
   id: SocialPlatform;
@@ -31,35 +57,35 @@ const SOCIAL_PLATFORMS: {
 
 export function SocialsCard({ socials, onUpdate }: SocialsCardProps) {
   // Build a working draft: { platform → handle_or_url }
-  const initialDraft: Record<string, string> = {};
-  for (const s of socials) initialDraft[s.platform] = s.handle_or_url;
+  const buildInitial = () => {
+    const d: Record<string, string> = {};
+    for (const s of socials) d[s.platform] = s.handle_or_url;
+    return d;
+  };
 
-  const [draft, setDraft] = useState<Record<string, string>>(initialDraft);
-  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>(buildInitial);
+  // Latest draft, readable synchronously from blur handlers.
+  const draftRef = useRef<Record<string, string>>(draft);
+  // Last snapshot successfully persisted to the server (state, so `dirty` reacts).
+  const [savedSnapshot, setSavedSnapshot] = useState<Record<string, string>>(draft);
+  const [status, setStatus] = useState<SaveState>("idle");
   const [error, setError] = useState<string>();
-  const [savedAt, setSavedAt] = useState<number>();
 
-  const dirty = (() => {
-    const platforms = new Set([
-      ...socials.map((s) => s.platform),
-      ...Object.keys(draft),
-    ]);
-    for (const p of platforms) {
-      const original = socials.find((s) => s.platform === p)?.handle_or_url ?? "";
-      if ((draft[p] ?? "").trim() !== original.trim()) return true;
-    }
-    return false;
-  })();
+  // Stable signature of the trimmed, non-empty links for change detection.
+  const signature = (d: Record<string, string>) =>
+    JSON.stringify(
+      SOCIAL_PLATFORMS.flatMap((p) => {
+        const v = (d[p.id] ?? "").trim();
+        return v ? [[p.id, v]] : [];
+      }),
+    );
 
-  const updateField = (platform: SocialPlatform, value: string) => {
-    setDraft((prev) => ({ ...prev, [platform]: value }));
+  const dirty = signature(draft) !== signature(savedSnapshot);
 
-    // Live preview update
-    const next: SocialLinkRow[] = SOCIAL_PLATFORMS.flatMap((p) => {
-      const v =
-        p.id === platform
-          ? value.trim()
-          : (draft[p.id] ?? "").trim();
+  // Build the live-preview rows from a full draft map.
+  const buildPreview = (d: Record<string, string>): SocialLinkRow[] =>
+    SOCIAL_PLATFORMS.flatMap((p) => {
+      const v = (d[p.id] ?? "").trim();
       if (!v) return [];
       const existing = socials.find((s) => s.platform === p.id);
       return [
@@ -75,15 +101,23 @@ export function SocialsCard({ socials, onUpdate }: SocialsCardProps) {
             },
       ];
     });
-    onUpdate(next);
+
+  const updateField = (platform: SocialPlatform, value: string) => {
+    const next = { ...draftRef.current, [platform]: value };
+    draftRef.current = next;
+    setDraft(next);
+    onUpdate(buildPreview(next));
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  // Persist the full set of links on blur. No-op when nothing changed.
+  const persist = async () => {
+    const d = draftRef.current;
+    if (signature(d) === signature(savedSnapshot)) return;
+    setStatus("saving");
     setError(undefined);
 
     const links = SOCIAL_PLATFORMS.flatMap((p) => {
-      const v = (draft[p.id] ?? "").trim();
+      const v = (d[p.id] ?? "").trim();
       return v ? [{ platform: p.id, handle_or_url: v }] : [];
     });
 
@@ -95,20 +129,21 @@ export function SocialsCard({ socials, onUpdate }: SocialsCardProps) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Failed to save");
+        setError(data.error ?? "Couldn’t save");
+        setStatus("error");
         return;
       }
-      // Refetch from server for canonical data
+      setSavedSnapshot(d);
+      // Refetch from server for canonical data (ids, ordering).
       const refresh = await fetch("/api/profile");
       if (refresh.ok) {
         const refreshData = await refresh.json();
         onUpdate(refreshData.socialLinks ?? []);
       }
-      setSavedAt(Date.now());
+      setStatus("saved");
     } catch {
       setError("Network error");
-    } finally {
-      setSaving(false);
+      setStatus("error");
     }
   };
 
@@ -119,37 +154,27 @@ export function SocialsCard({ socials, onUpdate }: SocialsCardProps) {
       icon=""
     >
       <div className="flex flex-col gap-3">
-        {SOCIAL_PLATFORMS.map((platform) => (
-          <div key={platform.id} className="flex items-center gap-2">
-            <span className="flex w-9 shrink-0 items-center justify-center text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-              {platform.label.slice(0, 3)}
-            </span>
-            <Input
-              value={draft[platform.id] ?? ""}
-              onChange={(e) => updateField(platform.id, e.target.value)}
-              placeholder={`${platform.label} — ${platform.placeholder}`}
-              className="flex-1"
-            />
-          </div>
-        ))}
+        {SOCIAL_PLATFORMS.map((platform) => {
+          const Icon = SOCIAL_ICONS[platform.id];
+          return (
+            <div key={platform.id} className="flex items-center gap-2">
+              <span className="flex w-9 shrink-0 items-center justify-center text-text-muted">
+                <Icon className="size-4" aria-hidden />
+                <span className="sr-only">{platform.label}</span>
+              </span>
+              <Input
+                value={draft[platform.id] ?? ""}
+                onChange={(e) => updateField(platform.id, e.target.value)}
+                onBlur={persist}
+                placeholder={`${platform.label} — ${platform.placeholder}`}
+                className="flex-1"
+              />
+            </div>
+          );
+        })}
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
-
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-xs text-text-muted">
-            {savedAt && !dirty
-              ? "✓ Saved"
-              : dirty
-                ? "Unsaved changes"
-                : "Up to date"}
-          </p>
-          <Button
-            onClick={handleSave}
-            isLoading={saving}
-            disabled={!dirty}
-          >
-            Save
-          </Button>
+        <div className="flex items-center justify-end pt-2">
+          <SaveStatus state={status} dirty={dirty} error={error} />
         </div>
       </div>
     </CardShell>

@@ -8,6 +8,9 @@ import {
   formatLastRefreshed,
   getFaceitLabel,
 } from "@/lib/utils/rank";
+import { GameLogo } from "@/components/ui/GameLogo";
+import { RankEmblem } from "@/components/ui/RankEmblem";
+import { withAlpha } from "@/lib/utils/color";
 import type { GameConnectionRow } from "@/types/db";
 
 const GAME_LABELS: Record<string, string> = {
@@ -16,92 +19,99 @@ const GAME_LABELS: Record<string, string> = {
   cs2: "Counter-Strike 2",
 };
 
-const GAME_SHORT: Record<string, string> = {
-  lol: "LoL",
-  valorant: "VAL",
-  cs2: "CS2",
-};
-
 interface RankCardProps {
   connection: GameConnectionRow;
 }
 
-export function RankCard({ connection }: RankCardProps) {
-  const colour = connection.game === "cs2"
-    ? getRankColour(
-        connection.skill_level
-          ? `FACEIT_${connection.skill_level}`
-          : null,
-      )
-    : getRankColour(connection.rank_tier);
-
-  const hex = connection.game === "cs2"
-    ? getRankHex(
-        connection.skill_level
-          ? `FACEIT_${connection.skill_level}`
-          : null,
-      )
-    : getRankHex(connection.rank_tier);
-
-  const displayRank =
-    connection.game === "cs2"
-      ? getFaceitLabel(connection.skill_level)
-      : formatRankDisplay(
-          connection.rank_tier,
-          connection.rank_division,
-        );
-
-  const lpDisplay = formatLpRr(connection.lp_rr, connection.game);
+export function RankCard({ connection: c }: RankCardProps) {
+  const isCs2 = c.game === "cs2";
+  const rankKey = isCs2 && c.skill_level ? `FACEIT_${c.skill_level}` : c.rank_tier;
+  const hex = getRankHex(rankKey);
+  const colour = getRankColour(rankKey);
+  const display = isCs2
+    ? getFaceitLabel(c.skill_level)
+    : formatRankDisplay(c.rank_tier, c.rank_division);
+  const lp = formatLpRr(c.lp_rr, c.game);
 
   return (
-    <div
-      className="group rounded-[10px] border p-4 transition-colors duration-[180ms] hover:border-border-default"
-      style={{
-        background: `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, 0.05)`,
-        borderColor: `rgba(${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}, 0.18)`,
-      }}
+    <article
+      className="group relative overflow-hidden rounded-[var(--radius-lg)] border bg-surface-1 transition-colors duration-200 hover:bg-surface-2"
+      style={{ borderColor: withAlpha(hex, 0.22) }}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[7px] border border-border-subtle bg-bg-elevated">
-            <span className="font-display text-[11px] font-bold tracking-wide text-text-secondary">
-              {GAME_SHORT[connection.game] ?? "—"}
+      {/* Left tier rail */}
+      <div
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-[3px]"
+        style={{ background: colour }}
+      />
+
+      {/* Halo behind the emblem */}
+      <div
+        aria-hidden
+        className="absolute right-0 top-0 h-full w-1/2 opacity-50 [mask-image:linear-gradient(to_left,black,transparent)]"
+        style={{
+          background: `radial-gradient(circle at 80% 50%, ${withAlpha(hex, 0.35)}, transparent 70%)`,
+        }}
+      />
+
+      <div className="relative flex items-center gap-3 p-4">
+        <RankEmblem
+          tier={c.rank_tier}
+          skillLevel={c.skill_level}
+          game={c.game}
+          size={56}
+        />
+
+        <div className="min-w-0 flex-1">
+          {/* Top row: game label  +  LIVE pill */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <GameLogo game={c.game} size={12} className="shrink-0 opacity-70" />
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-text-muted">
+                {GAME_LABELS[c.game] ?? c.game}
+              </p>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 font-mono text-[9px] uppercase tracking-[0.12em] text-success">
+              <span
+                className="size-1.5 rounded-full bg-success"
+                style={{ animation: "livePulse 2s ease-in-out infinite" }}
+              />
+              Live
             </span>
           </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
-              {GAME_LABELS[connection.game] ?? connection.game}
-            </p>
-            <p
-              className="font-display text-lg font-bold tracking-[0.02em]"
-              style={{ color: colour }}
-            >
-              {displayRank}
-            </p>
+
+          {/* Rank value */}
+          <p
+            className="mt-1 truncate font-display text-[24px] font-bold leading-none tracking-[0.02em] tabular-nums"
+            style={{ color: colour }}
+          >
+            {display ?? "Unranked"}
+          </p>
+
+          {/* Account · LP · updated */}
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text-muted">
+            <span className="min-w-0 flex-1 truncate font-mono">
+              {c.account_name ?? c.faceit_nickname ?? "—"}
+            </span>
+            {lp && (
+              <>
+                <span aria-hidden>·</span>
+                <span
+                  className="shrink-0 font-mono tabular-nums"
+                  style={{ color: withAlpha(colour, 0.85) }}
+                >
+                  {lp}
+                </span>
+              </>
+            )}
+            <span aria-hidden>·</span>
+            <span className="shrink-0 font-mono text-[10px]">
+              {formatLastRefreshed(c.last_refreshed_at)}
+            </span>
           </div>
         </div>
-
-        {lpDisplay && (
-          <span
-            className="rounded-md border px-2 py-0.5 font-mono text-xs"
-            style={{
-              color: colour,
-              borderColor: `${hex}33`,
-            }}
-          >
-            {lpDisplay}
-          </span>
-        )}
       </div>
-
-      {/* Account name + queue */}
-      <div className="mt-2 flex items-center justify-between text-[11px] text-text-muted">
-        <span className="font-mono">
-          {connection.account_name ?? connection.faceit_nickname ?? ""}
-        </span>
-        <span>{formatLastRefreshed(connection.last_refreshed_at)}</span>
-      </div>
-    </div>
+    </article>
   );
 }
 
@@ -109,9 +119,7 @@ interface LiveRanksSectionProps {
   connections: GameConnectionRow[];
 }
 
-export function LiveRanksSection({
-  connections,
-}: LiveRanksSectionProps) {
+export function LiveRanksSection({ connections }: LiveRanksSectionProps) {
   if (connections.length === 0) return null;
 
   return (

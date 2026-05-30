@@ -1,9 +1,5 @@
 import { config } from "@/lib/env";
-import type {
-  RiotAccount,
-  LolSummoner,
-  LolLeagueEntry,
-} from "@/types/api";
+import type { RiotAccount, LolSummoner, LolLeagueEntry } from "@/types/api";
 import { RIOT_REGIONS, getCluster, type RiotRegion } from "./riot-regions";
 
 // Re-export so existing imports from "@/lib/api/riot" keep working
@@ -153,7 +149,9 @@ export async function fetchLolSummoner(
   );
 
   if (res.status === 404) {
-    throw new Error("Summoner not found for this PUUID. The account may not play LoL on this region.");
+    throw new Error(
+      "Summoner not found for this PUUID. The account may not play LoL on this region.",
+    );
   }
   if (!res.ok) {
     throw new Error(`LoL summoner fetch failed: ${res.status}`);
@@ -167,10 +165,9 @@ export async function fetchLolRankedEntriesByPuuid(
   puuid: string,
   region: RiotRegion,
 ): Promise<LolLeagueEntry[]> {
-  const res = await fetch(
-    `${lolBase(region)}/lol/league/v4/entries/by-puuid/${puuid}`,
-    { headers: { "X-Riot-Token": config.riot.apiKey } },
-  );
+  const res = await fetch(`${lolBase(region)}/lol/league/v4/entries/by-puuid/${puuid}`, {
+    headers: { "X-Riot-Token": config.riot.apiKey },
+  });
 
   if (!res.ok) {
     throw new Error(`LoL ranked fetch failed: ${res.status}`);
@@ -222,6 +219,32 @@ export async function fetchLolRankByPuuid(
 }
 
 // ---------------------------------------------------------------------------
+// TFT API — ranked queue uses tft/league/v1 endpoints
+// ---------------------------------------------------------------------------
+
+export async function fetchTftRankByPuuid(
+  puuid: string,
+  region: RiotRegion,
+): Promise<LolLeagueEntry | null> {
+  // TFT shares the same summoner ID as LoL — reuse the LoL summoner endpoint
+  let summonerId: string;
+  try {
+    const summoner = await fetchLolSummoner(puuid, region);
+    summonerId = summoner.id;
+  } catch {
+    return null;
+  }
+
+  const res = await fetch(
+    `${lolBase(region)}/tft/league/v1/entries/by-summoner/${summonerId}`,
+    { headers: { "X-Riot-Token": config.riot.apiKey } },
+  );
+  if (!res.ok) return null;
+  const entries: LolLeagueEntry[] = await res.json();
+  return entries.find((e) => e.queueType === "RANKED_TFT") ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // Full connect flow: Riot ID → account + LoL rank
 // ---------------------------------------------------------------------------
 
@@ -245,7 +268,10 @@ export async function connectByRiotId(
     lolRank = await fetchLolRankByPuuid(account.puuid, region);
   } catch (err) {
     lolError = err instanceof Error ? err.message : String(err);
-    console.warn(`[riot] LoL fetch failed for ${gameName}#${tagLine} on ${region}:`, lolError);
+    console.warn(
+      `[riot] LoL fetch failed for ${gameName}#${tagLine} on ${region}:`,
+      lolError,
+    );
   }
 
   return { account, lolRank, lolError, region };

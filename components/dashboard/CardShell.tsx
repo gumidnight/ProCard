@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface CardShellProps {
   title: string;
@@ -22,41 +23,32 @@ export function CardShell({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <section className="overflow-hidden rounded-[10px] border border-border-subtle bg-bg-surface">
-      <div className="flex items-center justify-between gap-3 px-5 py-4 transition-colors hover:bg-bg-subtle/40">
+    <section className="overflow-hidden rounded-[10px] border border-border-subtle bg-surface-1">
+      <div className="flex items-center gap-3 pr-5 transition-colors hover:bg-surface-3/40">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="flex flex-1 items-center gap-3 text-left"
+          aria-expanded={open}
+          className="flex flex-1 items-center justify-between gap-3 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]"
         >
-          {icon && <span className="text-xl">{icon}</span>}
-          <div>
-            <h3 className="font-display text-base font-semibold tracking-wide text-text-primary">
-              {title}
-            </h3>
-            {subtitle && (
-              <p className="mt-0.5 text-xs text-text-muted">{subtitle}</p>
-            )}
+          <div className="flex flex-1 items-center gap-3">
+            {icon && <span className="text-xl">{icon}</span>}
+            <div>
+              <h3 className="font-display text-base font-semibold tracking-wide text-text-primary">
+                {title}
+              </h3>
+              {subtitle && <p className="mt-0.5 text-xs text-text-muted">{subtitle}</p>}
+            </div>
           </div>
+          <ChevronDown
+            aria-hidden
+            className={`size-4 text-text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
         </button>
-        <div className="flex items-center gap-3">
-          {rightSlot}
-          <button
-            type="button"
-            onClick={() => setOpen((o) => !o)}
-            className={`text-text-muted transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-            aria-label={open ? "Collapse" : "Expand"}
-          >
-            ▾
-          </button>
-        </div>
+        {rightSlot && <div className="flex items-center gap-2">{rightSlot}</div>}
       </div>
 
-      {open && (
-        <div className="border-t border-border-subtle px-5 py-5">
-          {children}
-        </div>
-      )}
+      {open && <div className="border-t border-border-subtle px-5 py-5">{children}</div>}
     </section>
   );
 }

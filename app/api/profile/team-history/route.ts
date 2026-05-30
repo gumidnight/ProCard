@@ -38,7 +38,18 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { id, org_name, role, game, start_date, end_date, result_note, display_order } = body;
+  const {
+    id,
+    org_name,
+    tournament_name,
+    org_logo_url,
+    role,
+    game,
+    start_date,
+    end_date,
+    result_note,
+    display_order,
+  } = body;
 
   if (!org_name || !game) {
     return NextResponse.json(
@@ -47,10 +58,28 @@ export async function POST(req: Request) {
     );
   }
 
+  // Basic URL guard for the logo (allow http/https only)
+  let logo: string | null = null;
+  if (typeof org_logo_url === "string" && org_logo_url.trim()) {
+    const trimmed = org_logo_url.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+      return NextResponse.json(
+        { error: "org_logo_url must be an http(s) URL" },
+        { status: 400 },
+      );
+    }
+    logo = trimmed;
+  }
+
   const entry = upsertTeamHistory({
     id: id ?? crypto.randomUUID(),
     profile_id: profile.id,
     org_name,
+    tournament_name:
+      typeof tournament_name === "string" && tournament_name.trim()
+        ? tournament_name.trim()
+        : null,
+    org_logo_url: logo,
     role: role ?? null,
     game,
     start_date: start_date ?? null,

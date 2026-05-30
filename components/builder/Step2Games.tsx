@@ -33,12 +33,7 @@ interface Step2Props {
   onBack: () => void;
 }
 
-export function Step2Games({
-  data,
-  onChange,
-  onNext,
-  onBack,
-}: Step2Props) {
+export function Step2Games({ data, onChange, onNext, onBack }: Step2Props) {
   const toggleGame = (gameId: string) => {
     const selected = data.selectedGames.includes(gameId)
       ? data.selectedGames.filter((g) => g !== gameId)
@@ -50,13 +45,9 @@ export function Step2Games({
   };
 
   const toggleRole = (game: string, role: string) => {
-    const exists = data.roles.find(
-      (r) => r.game === game && r.role === role,
-    );
+    const exists = data.roles.find((r) => r.game === game && r.role === role);
     const roles = exists
-      ? data.roles.filter(
-          (r) => !(r.game === game && r.role === role),
-        )
+      ? data.roles.filter((r) => !(r.game === game && r.role === role))
       : [...data.roles, { game, role, is_main: false }];
     onChange({ ...data, roles });
   };
@@ -80,12 +71,8 @@ export function Step2Games({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-display text-2xl font-bold tracking-wide">
-          Games & Roles
-        </h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          What do you play?
-        </p>
+        <h2 className="font-display text-2xl font-bold tracking-wide">Games & Roles</h2>
+        <p className="mt-1 text-sm text-text-secondary">What do you play?</p>
       </div>
 
       {/* Game selection */}
@@ -102,11 +89,13 @@ export function Step2Games({
                 onClick={() => toggleGame(game.id)}
                 className={`flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
                   selected
-                    ? "border-accent bg-accent/10 text-accent-light"
-                    : "border-border-subtle bg-bg-surface text-text-secondary hover:border-border-default"
+                    ? "border-accent bg-accent/10 text-accent-hover"
+                    : "border-border-subtle bg-surface-1 text-text-secondary hover:border-border-default"
                 }`}
               >
-                <span className="font-display text-[11px] font-bold tracking-wide">{game.short}</span>
+                <span className="font-display text-[11px] font-bold tracking-wide">
+                  {game.short}
+                </span>
                 {game.name}
               </button>
             );
@@ -127,20 +116,16 @@ export function Step2Games({
             </label>
             <div className="flex flex-wrap gap-2">
               {roles.map((role) => {
-                const isSelected = selectedRoles.some(
-                  (r) => r.role === role,
-                );
-                const isMain = selectedRoles.some(
-                  (r) => r.role === role && r.is_main,
-                );
+                const isSelected = selectedRoles.some((r) => r.role === role);
+                const isMain = selectedRoles.some((r) => r.role === role && r.is_main);
                 return (
                   <div key={role} className="flex items-center gap-1">
                     <button
                       onClick={() => toggleRole(gameId, role)}
                       className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
                         isSelected
-                          ? "border-accent/50 bg-accent/10 text-accent-light"
-                          : "border-border-subtle bg-bg-elevated text-text-muted hover:text-text-secondary"
+                          ? "border-accent/50 bg-accent/10 text-accent-hover"
+                          : "border-border-subtle bg-surface-2 text-text-muted hover:text-text-secondary"
                       }`}
                     >
                       {role}

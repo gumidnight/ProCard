@@ -33,6 +33,7 @@ export default async function DashboardPage() {
       initialSocialLinks={socialLinks}
       initialTeamHistory={teamHistory}
       initialRolesPlayed={rolesPlayed}
+      baseUrl={process.env.NEXT_PUBLIC_BASE_URL ?? "https://procard.gg"}
     />
   );
 }

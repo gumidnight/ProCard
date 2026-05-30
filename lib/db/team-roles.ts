@@ -9,6 +9,8 @@ export function upsertTeamHistory(data: {
   id: string;
   profile_id: string;
   org_name: string;
+  tournament_name?: string | null;
+  org_logo_url?: string | null;
   role?: string | null;
   game: string;
   start_date?: string | null;
@@ -19,18 +21,21 @@ export function upsertTeamHistory(data: {
   ensureMigrated();
   const db = getDb();
 
-  const existing = db
-    .prepare("SELECT * FROM team_history WHERE id = ?")
-    .get(data.id) as TeamHistoryRow | undefined;
+  const existing = db.prepare("SELECT * FROM team_history WHERE id = ?").get(data.id) as
+    | TeamHistoryRow
+    | undefined;
 
   if (existing) {
     db.prepare(
       `UPDATE team_history
-       SET org_name = ?, role = ?, game = ?, start_date = ?,
-           end_date = ?, result_note = ?, display_order = ?
+       SET org_name = ?, tournament_name = ?, org_logo_url = ?, role = ?,
+           game = ?, start_date = ?, end_date = ?, result_note = ?,
+           display_order = ?
        WHERE id = ?`,
     ).run(
       data.org_name,
+      data.tournament_name ?? null,
+      data.org_logo_url ?? null,
       data.role ?? null,
       data.game,
       data.start_date ?? null,
@@ -45,12 +50,14 @@ export function upsertTeamHistory(data: {
   }
 
   db.prepare(
-    `INSERT INTO team_history (id, profile_id, org_name, role, game, start_date, end_date, result_note, display_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO team_history (id, profile_id, org_name, tournament_name, org_logo_url, role, game, start_date, end_date, result_note, display_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     data.id,
     data.profile_id,
     data.org_name,
+    data.tournament_name ?? null,
+    data.org_logo_url ?? null,
     data.role ?? null,
     data.game,
     data.start_date ?? null,
@@ -64,15 +71,11 @@ export function upsertTeamHistory(data: {
     .get(data.id) as TeamHistoryRow;
 }
 
-export function findTeamHistoryByProfileId(
-  profileId: string,
-): TeamHistoryRow[] {
+export function findTeamHistoryByProfileId(profileId: string): TeamHistoryRow[] {
   ensureMigrated();
   const db = getDb();
   return db
-    .prepare(
-      "SELECT * FROM team_history WHERE profile_id = ? ORDER BY display_order",
-    )
+    .prepare("SELECT * FROM team_history WHERE profile_id = ? ORDER BY display_order")
     .all(profileId) as TeamHistoryRow[];
 }
 
@@ -113,21 +116,15 @@ export function upsertRolePlayed(data: {
   );
 
   return db
-    .prepare(
-      "SELECT * FROM roles_played WHERE profile_id = ? AND game = ? AND role = ?",
-    )
+    .prepare("SELECT * FROM roles_played WHERE profile_id = ? AND game = ? AND role = ?")
     .get(data.profile_id, data.game, data.role) as RolePlayedRow;
 }
 
-export function findRolesPlayedByProfileId(
-  profileId: string,
-): RolePlayedRow[] {
+export function findRolesPlayedByProfileId(profileId: string): RolePlayedRow[] {
   ensureMigrated();
   const db = getDb();
   return db
-    .prepare(
-      "SELECT * FROM roles_played WHERE profile_id = ? ORDER BY display_order",
-    )
+    .prepare("SELECT * FROM roles_played WHERE profile_id = ? ORDER BY display_order")
     .all(profileId) as RolePlayedRow[];
 }
 

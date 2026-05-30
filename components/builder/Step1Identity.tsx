@@ -25,28 +25,18 @@ interface Step1Props {
   username: string;
 }
 
-export function Step1Identity({
-  data,
-  onChange,
-  onNext,
-  username,
-}: Step1Props) {
+export function Step1Identity({ data, onChange, onNext, username }: Step1Props) {
   const update = (field: keyof Step1Data, value: string) => {
     onChange({ ...data, [field]: value });
   };
 
-  const canProceed =
-    data.display_name.trim().length > 0 && data.slug.length >= 3;
+  const canProceed = data.display_name.trim().length > 0 && data.slug.length >= 3;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="font-display text-2xl font-bold tracking-wide">
-          Your Identity
-        </h2>
-        <p className="mt-1 text-sm text-text-secondary">
-          How do you want to be known?
-        </p>
+        <h2 className="font-display text-2xl font-bold tracking-wide">Your Identity</h2>
+        <p className="mt-1 text-sm text-text-secondary">How do you want to be known?</p>
       </div>
 
       <Input
@@ -77,7 +67,7 @@ export function Step1Identity({
         onChange={(e) => update("country", e.target.value)}
         options={COUNTRIES.map((c) => ({
           value: c.code,
-          label: `${c.flag} ${c.name}`,
+          label: c.name,
         }))}
       />
 
@@ -99,6 +89,9 @@ export function Step1Identity({
         maxLength={280}
         charCount
         rows={3}
+        hint={
+          "Markdown supported — **bold**, *italic*, ~~strike~~, `code`, [links](https://…)"
+        }
       />
 
       <div className="flex justify-end pt-2">

@@ -11,13 +11,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-accent text-white hover:bg-accent-light border border-transparent",
+    "bg-accent text-[var(--accent-on)] hover:bg-accent-hover border border-transparent font-semibold",
   secondary:
-    "bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated",
+    "bg-transparent text-text-primary border border-border-default hover:bg-surface-2",
   ghost:
     "bg-transparent text-text-secondary hover:text-text-primary border border-transparent",
-  danger:
-    "bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20",
+  danger: "bg-danger/10 text-danger border border-danger/20 hover:bg-danger/20",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -40,11 +39,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading && (
-          <svg
-            className="h-4 w-4 animate-spin"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
+          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle
               className="opacity-25"
               cx="12"

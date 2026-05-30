@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { ProCardMark } from "@/components/ui/ProCardLogo";
 
 const ERROR_MESSAGES: Record<string, string> = {
   access_denied: "You denied access. Try again when you're ready.",
@@ -19,12 +20,11 @@ function LoginContent() {
       <div className="flex w-full max-w-xs flex-col items-center gap-10">
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
+          <ProCardMark size={52} />
           <h1 className="font-display text-3xl font-bold tracking-[0.06em]">
-            PROCARD<span className="text-accent-light">.GG</span>
+            PROCARD<span className="text-accent">.GG</span>
           </h1>
-          <p className="text-[12px] text-text-muted">
-            Sign in to manage your profile
-          </p>
+          <p className="text-[12px] text-text-muted">Sign in to manage your profile</p>
         </div>
 
         {/* Error message */}
@@ -36,6 +36,8 @@ function LoginContent() {
 
         {/* Discord login button */}
         <div className="flex w-full flex-col gap-3">
+          {/* OAuth start: a real navigation to the API route, not client-side <Link>. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/auth/discord"
             className="flex w-full items-center justify-center gap-3 rounded-lg bg-[#5865F2] px-5 py-3 text-[13px] font-medium text-white transition-all hover:bg-[#4752C4] active:scale-[0.97]"

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- Neutral dark: clean centre-lift vignette, nothing else -->
+  <defs>
+    <radialGradient id="lift" cx="50%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#1A1F29"/>
+      <stop offset="55%" stop-color="#0F1218"/>
+      <stop offset="100%" stop-color="#070809"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="44%" r="80%">
+      <stop offset="45%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#lift)"/>
+  <rect width="1600" height="900" fill="url(#vig)"/>
+</svg>

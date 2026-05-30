@@ -21,6 +21,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  // Base URL for resolving absolute OG / Twitter image URLs in production.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "https://procard.gg"),
   title: "ProCard — Your Esports Identity",
   description:
     "One link for your competitive gaming profile. Live verified ranks, team history, and socials — built for serious players.",
@@ -36,7 +38,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${rajdhani.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-bg-base text-text-primary font-body">
+      <body className="min-h-full flex flex-col bg-surface-0 text-text-primary font-body">
         {children}
       </body>
     </html>

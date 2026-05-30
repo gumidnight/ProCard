@@ -89,22 +89,22 @@ export function Step4History({
       {data.entries.map((entry) => (
         <div
           key={entry.id}
-          className="flex items-start justify-between rounded-lg border border-border-subtle bg-bg-surface p-4"
+          className="flex items-start justify-between rounded-lg border border-border-subtle bg-surface-1 p-4"
         >
           <div>
-            <p className="font-display text-sm font-semibold">
-              {entry.org_name}
-            </p>
+            <p className="font-display text-sm font-semibold">{entry.org_name}</p>
             <p className="text-xs text-text-secondary">
               {entry.role && `${entry.role} · `}
-              {entry.game === "lol" ? "LoL" : entry.game === "valorant" ? "Valorant" : "CS2"}
+              {entry.game === "lol"
+                ? "LoL"
+                : entry.game === "valorant"
+                  ? "Valorant"
+                  : "CS2"}
               {entry.start_date && ` · ${entry.start_date}`}
               {entry.end_date && `–${entry.end_date}`}
             </p>
             {entry.result_note && (
-              <p className="mt-1 text-xs italic text-text-muted">
-                {entry.result_note}
-              </p>
+              <p className="mt-1 text-xs italic text-text-muted">{entry.result_note}</p>
             )}
           </div>
           <button
@@ -118,55 +118,43 @@ export function Step4History({
 
       {/* Add form */}
       {isAdding ? (
-        <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-bg-surface p-4">
+        <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface-1 p-4">
           <Input
             label="Team / Org name"
             value={draft.org_name}
-            onChange={(e) =>
-              setDraft({ ...draft, org_name: e.target.value })
-            }
+            onChange={(e) => setDraft({ ...draft, org_name: e.target.value })}
             placeholder="Team Liquid"
           />
           <Input
             label="Role"
             value={draft.role}
-            onChange={(e) =>
-              setDraft({ ...draft, role: e.target.value })
-            }
+            onChange={(e) => setDraft({ ...draft, role: e.target.value })}
             placeholder="Mid Laner, IGL, etc."
           />
           <Select
             label="Game"
             value={draft.game}
-            onChange={(e) =>
-              setDraft({ ...draft, game: e.target.value })
-            }
+            onChange={(e) => setDraft({ ...draft, game: e.target.value })}
             options={gameOptions}
           />
           <div className="flex gap-3">
             <Input
               label="Start"
               value={draft.start_date}
-              onChange={(e) =>
-                setDraft({ ...draft, start_date: e.target.value })
-              }
+              onChange={(e) => setDraft({ ...draft, start_date: e.target.value })}
               placeholder="2024"
             />
             <Input
               label="End"
               value={draft.end_date}
-              onChange={(e) =>
-                setDraft({ ...draft, end_date: e.target.value })
-              }
+              onChange={(e) => setDraft({ ...draft, end_date: e.target.value })}
               placeholder="Present"
             />
           </div>
           <Input
             label="Notable result"
             value={draft.result_note}
-            onChange={(e) =>
-              setDraft({ ...draft, result_note: e.target.value })
-            }
+            onChange={(e) => setDraft({ ...draft, result_note: e.target.value })}
             placeholder="ESL Pro League S18 — QF"
           />
           <div className="flex gap-2">

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500" preserveAspectRatio="xMidYMid slice">
+  <!-- Demo banner strip (~3:1). Dark, branded, low-contrast — for showcase profiles. -->
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0E1117"/>
+      <stop offset="55%" stop-color="#14171F"/>
+      <stop offset="100%" stop-color="#0B0D12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="22%" cy="50%" r="60%">
+      <stop offset="0" stop-color="#FF5C00" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#FF5C00" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+      <path d="M44 0 H0 V44" fill="none" stroke="#FFFFFF" stroke-opacity="0.03" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1500" height="500" fill="url(#base)"/>
+  <rect width="1500" height="500" fill="url(#grid)"/>
+  <rect width="1500" height="500" fill="url(#glow)"/>
+  <!-- angled accent slashes, right side -->
+  <g stroke="#FF5C00" stroke-opacity="0.5" stroke-width="6">
+    <line x1="1180" y1="-40" x2="980" y2="540"/>
+    <line x1="1240" y1="-40" x2="1040" y2="540"/>
+  </g>
+  <!-- faint shield mark, right -->
+  <g transform="translate(1330 250) scale(1.7)" opacity="0.07">
+    <path d="M0 -78 L66 -52 V8 C66 56 38 86 0 104 C-38 86 -66 56 -66 8 V-52 Z"
+          fill="none" stroke="#FFFFFF" stroke-width="5"/>
+    <path d="M-26 -34 H10 a26 26 0 0 1 0 52 H-10 V46 H-26 Z M-10 -18 V2 H8 a10 10 0 0 0 0 -20 Z"
+          fill="#FF5C00"/>
+  </g>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- Branded house background: very dark base, faint top accent glow, centered ProCard shield watermark -->
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0E1117"/>
+      <stop offset="1" stop-color="#070809"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="70%">
+      <stop offset="0" stop-color="#FF5C00" stop-opacity="0.10"/>
+      <stop offset="55%" stop-color="#FF5C00" stop-opacity="0.02"/>
+      <stop offset="100%" stop-color="#FF5C00" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="50%" cy="48%" r="75%">
+      <stop offset="40%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.55"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#base)"/>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  <!-- Shield mark watermark, centered, very low contrast -->
+  <g transform="translate(800 450) scale(3.1)" opacity="0.04">
+    <path d="M0 -78 L66 -52 V8 C66 56 38 86 0 104 C-38 86 -66 56 -66 8 V-52 Z"
+          fill="none" stroke="#FFFFFF" stroke-width="5"/>
+    <path d="M-26 -34 H10 a26 26 0 0 1 0 52 H-10 V46 H-26 Z M-10 -18 V2 H8 a10 10 0 0 0 0 -20 Z"
+          fill="#FF5C00"/>
+  </g>
+  <rect width="1600" height="900" fill="url(#vig)"/>
+</svg>

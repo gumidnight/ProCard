@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
-import {
-  createProfile,
-  findProfileByUserId,
-  updateProfile,
-} from "@/lib/db/profiles";
+import { createProfile, findProfileByUserId, updateProfile } from "@/lib/db/profiles";
 import { findGameConnectionsByProfileId } from "@/lib/db/game-connections";
 import { findSocialLinksByProfileId } from "@/lib/db/social-links";
 import {
@@ -55,10 +51,7 @@ export async function POST(req: Request) {
   // Check if profile already exists
   const existing = findProfileByUserId(user.id);
   if (existing) {
-    return NextResponse.json(
-      { error: "Profile already exists" },
-      { status: 409 },
-    );
+    return NextResponse.json({ error: "Profile already exists" }, { status: 409 });
   }
 
   const body = await req.json();
@@ -66,26 +59,17 @@ export async function POST(req: Request) {
 
   // Validate slug
   if (!slug || typeof slug !== "string") {
-    return NextResponse.json(
-      { error: "Slug is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Slug is required" }, { status: 400 });
   }
 
   const slugCheck = isValidSlug(slug);
   if (!slugCheck.valid) {
-    return NextResponse.json(
-      { error: slugCheck.error },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: slugCheck.error }, { status: 400 });
   }
 
   // Validate display name
   if (!display_name || typeof display_name !== "string") {
-    return NextResponse.json(
-      { error: "Display name is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Display name is required" }, { status: 400 });
   }
 
   try {
@@ -107,13 +91,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ profile }, { status: 201 });
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "Unknown error";
     if (message.includes("UNIQUE constraint")) {
-      return NextResponse.json(
-        { error: "Slug is already taken" },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: "Slug is already taken" }, { status: 409 });
     }
     throw err;
   }
@@ -131,10 +111,7 @@ export async function PATCH(req: Request) {
 
   const profile = findProfileByUserId(user.id);
   if (!profile) {
-    return NextResponse.json(
-      { error: "No profile found" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "No profile found" }, { status: 404 });
   }
 
   const body = await req.json();
@@ -145,7 +122,18 @@ export async function PATCH(req: Request) {
     "tagline",
     "bio",
     "status",
+    "status_note",
+    "current_team_name",
+    "current_team_logo_url",
+    "current_league",
+    "current_role",
+    "current_game",
     "esports_role",
+    // Background customization. NOTE: is_verified / is_pro / banner_key /
+    // background_key are intentionally NOT here — those are set by the upload
+    // routes or admin/DB, so users can't self-verify or self-upgrade.
+    "background_type",
+    "background_preset",
     "is_published",
   ] as const;
 
@@ -160,10 +148,7 @@ export async function PATCH(req: Request) {
   if (updates.slug && typeof updates.slug === "string") {
     const slugCheck = isValidSlug(updates.slug);
     if (!slugCheck.valid) {
-      return NextResponse.json(
-        { error: slugCheck.error },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: slugCheck.error }, { status: 400 });
     }
   }
 
@@ -176,13 +161,9 @@ export async function PATCH(req: Request) {
     const updated = updateProfile(profile.id, updates);
     return NextResponse.json({ profile: updated });
   } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "Unknown error";
     if (message.includes("UNIQUE constraint")) {
-      return NextResponse.json(
-        { error: "Slug is already taken" },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: "Slug is already taken" }, { status: 409 });
     }
     throw err;
   }

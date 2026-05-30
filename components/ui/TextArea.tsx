@@ -2,8 +2,7 @@
 
 import { forwardRef, type TextareaHTMLAttributes } from "react";
 
-interface TextAreaProps
-  extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   hint?: string;
@@ -26,8 +25,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
     ref,
   ) => {
     const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
-    const currentLength =
-      typeof value === "string" ? value.length : 0;
+    const currentLength = typeof value === "string" ? value.length : 0;
 
     return (
       <div className="flex flex-col gap-1.5">
@@ -51,7 +49,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           id={inputId}
           value={value}
           maxLength={maxLength}
-          className={`rounded-[7px] border bg-bg-elevated px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none transition-colors duration-150 resize-none ${
+          className={`rounded-[7px] border bg-surface-2 px-3 py-2.5 text-[13px] text-text-primary placeholder:text-text-muted outline-none transition-colors duration-150 resize-none ${
             error
               ? "border-danger/50 focus:border-danger"
               : "border-border-subtle focus:border-accent/50"
@@ -59,9 +57,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
           {...props}
         />
         {error && <p className="text-xs text-red-400">{error}</p>}
-        {hint && !error && (
-          <p className="text-xs text-text-muted">{hint}</p>
-        )}
+        {hint && !error && <p className="text-xs text-text-muted">{hint}</p>}
       </div>
     );
   },

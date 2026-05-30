@@ -30,18 +30,16 @@ export function createProfile(data: {
     data.bio ?? null,
     data.status ?? "not_looking",
   );
-  return db
-    .prepare("SELECT * FROM profiles WHERE id = ?")
-    .get(data.id) as ProfileRow;
+  return db.prepare("SELECT * FROM profiles WHERE id = ?").get(data.id) as ProfileRow;
 }
 
 export function findProfileByUserId(userId: string): ProfileRow | null {
   ensureMigrated();
   const db = getDb();
   return (
-    (db
-      .prepare("SELECT * FROM profiles WHERE user_id = ?")
-      .get(userId) as ProfileRow | undefined) ?? null
+    (db.prepare("SELECT * FROM profiles WHERE user_id = ?").get(userId) as
+      | ProfileRow
+      | undefined) ?? null
   );
 }
 
@@ -77,7 +75,19 @@ export function updateProfile(
       | "bio"
       | "avatar_key"
       | "status"
+      | "status_note"
+      | "current_team_name"
+      | "current_team_logo_url"
+      | "current_league"
+      | "current_role"
+      | "current_game"
       | "esports_role"
+      | "banner_key"
+      | "background_type"
+      | "background_preset"
+      | "background_key"
+      | "is_verified"
+      | "is_pro"
       | "is_published"
       | "published_at"
     >
@@ -99,9 +109,7 @@ export function updateProfile(
   fields.push("updated_at = unixepoch()");
   values.push(id);
 
-  db.prepare(
-    `UPDATE profiles SET ${fields.join(", ")} WHERE id = ?`,
-  ).run(...values);
+  db.prepare(`UPDATE profiles SET ${fields.join(", ")} WHERE id = ?`).run(...values);
 
   return findProfileByIdInternal(id);
 }
@@ -118,8 +126,6 @@ function findProfileByIdInternal(id: string): ProfileRow | null {
 export function isSlugAvailable(slug: string): boolean {
   ensureMigrated();
   const db = getDb();
-  const row = db
-    .prepare("SELECT 1 FROM profiles WHERE slug = ?")
-    .get(slug);
+  const row = db.prepare("SELECT 1 FROM profiles WHERE slug = ?").get(slug);
   return !row;
 }

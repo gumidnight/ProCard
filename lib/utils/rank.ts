@@ -77,29 +77,32 @@ export function getRankHex(tier: string | null): string {
   return RANK_HEX[key] ?? "#888799";
 }
 
+// Tiers that have no divisions — LP/RR only, never show a number
+const APEX_TIERS = new Set([
+  "CHALLENGER",
+  "GRANDMASTER",
+  "MASTER",
+  "RADIANT",
+  "GLOBAL ELITE",
+]);
+
 /**
  * Format a rank display string.
  * e.g. "DIAMOND" + "II" → "Diamond II"
- *      "IMMORTAL" + null → "Immortal"
+ *      "CHALLENGER" + "I" → "Challenger"  (apex tiers have no division)
  */
-export function formatRankDisplay(
-  tier: string | null,
-  division: string | null,
-): string {
+export function formatRankDisplay(tier: string | null, division: string | null): string {
   if (!tier) return "Unranked";
-  const formatted =
-    tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
-  if (division) return `${formatted} ${division}`;
+  const upper = tier.toUpperCase().trim();
+  const formatted = upper.charAt(0) + upper.slice(1).toLowerCase();
+  if (division && !APEX_TIERS.has(upper)) return `${formatted} ${division}`;
   return formatted;
 }
 
 /**
  * Format LP / RR / ELO with label.
  */
-export function formatLpRr(
-  value: number | null,
-  game: string,
-): string {
+export function formatLpRr(value: number | null, game: string): string {
   if (value === null || value === undefined) return "";
   if (game === "lol") return `${value.toLocaleString()} LP`;
   if (game === "valorant") return `${value} RR`;

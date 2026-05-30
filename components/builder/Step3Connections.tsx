@@ -44,9 +44,7 @@ export function Step3Connections({
     setRiotError(undefined);
 
     try {
-      const riotGames = selectedGames.filter((g) =>
-        g === "lol" || g === "valorant",
-      );
+      const riotGames = selectedGames.filter((g) => g === "lol" || g === "valorant");
       const res = await fetch("/api/connect/riot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,15 +106,14 @@ export function Step3Connections({
       </div>
 
       {/* Riot (LoL + Valorant) */}
-      {(selectedGames.includes("lol") ||
-        selectedGames.includes("valorant")) && (
-        <div className="rounded-lg border border-border-subtle bg-bg-surface p-4">
+      {(selectedGames.includes("lol") || selectedGames.includes("valorant")) && (
+        <div className="rounded-lg border border-border-subtle bg-surface-1 p-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[7px] border border-border-subtle bg-bg-elevated font-display text-[11px] font-bold tracking-wide text-text-secondary">RIOT</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-[7px] border border-border-subtle bg-surface-2 font-display text-[11px] font-bold tracking-wide text-text-secondary">
+              RIOT
+            </span>
             <div>
-              <p className="text-sm font-medium text-text-primary">
-                Riot Account
-              </p>
+              <p className="text-sm font-medium text-text-primary">Riot Account</p>
               <p className="text-xs text-text-muted">
                 Covers League of Legends & Valorant
               </p>
@@ -128,8 +125,7 @@ export function Step3Connections({
               <span>✓</span>
               <span>
                 Connected:{" "}
-                {connections.lol.accountName ??
-                  connections.valorant.accountName}
+                {connections.lol.accountName ?? connections.valorant.accountName}
               </span>
             </div>
           ) : (
@@ -138,7 +134,7 @@ export function Step3Connections({
                 <select
                   value={riotRegion}
                   onChange={(e) => setRiotRegion(e.target.value as RiotRegion)}
-                  className="rounded-md border border-border-subtle bg-bg-base px-2 py-2 text-sm text-text-primary focus:border-border-default focus:outline-none"
+                  className="rounded-md border border-border-subtle bg-surface-0 px-2 py-2 text-sm text-text-primary focus:border-border-default focus:outline-none"
                 >
                   {RIOT_REGIONS.map((r) => (
                     <option key={r.value} value={r.value}>
@@ -170,16 +166,14 @@ export function Step3Connections({
 
       {/* Faceit (CS2) */}
       {selectedGames.includes("cs2") && (
-        <div className="rounded-lg border border-border-subtle bg-bg-surface p-4">
+        <div className="rounded-lg border border-border-subtle bg-surface-1 p-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-[7px] border border-border-subtle bg-bg-elevated font-display text-[11px] font-bold tracking-wide text-text-secondary">CS2</span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-[7px] border border-border-subtle bg-surface-2 font-display text-[11px] font-bold tracking-wide text-text-secondary">
+              CS2
+            </span>
             <div>
-              <p className="text-sm font-medium text-text-primary">
-                Faceit Account
-              </p>
-              <p className="text-xs text-text-muted">
-                CS2 ELO and skill level
-              </p>
+              <p className="text-sm font-medium text-text-primary">Faceit Account</p>
+              <p className="text-xs text-text-muted">CS2 ELO and skill level</p>
             </div>
           </div>
 
