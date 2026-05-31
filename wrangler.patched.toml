@@ -1,0 +1,42 @@
+name = "procard"
+account_id = "6822a908fa8bddc4431dc7ff3db81c32"
+main = ".open-next/worker-patched.js"
+compatibility_date = "2025-05-05"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[observability]
+enabled = true
+
+# ─────── PRODUCTION ────────────────
+[env.production]
+[env.production.vars]
+APP_URL = "https://procard.gg"
+DISCORD_REDIRECT_URI = "https://procard.gg/auth/callback"
+RIOT_REDIRECT_URI = "https://procard.gg/api/connect/riot/callback"
+ASSET_BASE_URL = "https://cdn.procard.gg"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "procard-db-prod"
+database_id = "b815b15f-08fd-4285-b602-845dfd61b83b"
+migrations_dir = "migrations"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "36b6c25014eb461cbcfb66bebf1d152c"
+
+[[env.production.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "procard-assets-prod"
+
+[[env.production.routes]]
+pattern = "procard.gg/*"
+zone_name = "procard.gg"
+
+[[env.production.routes]]
+pattern = "www.procard.gg/*"
+zone_name = "procard.gg"
