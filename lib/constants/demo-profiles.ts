@@ -61,6 +61,7 @@ function makeProfile(p: {
     background_type: p.background_type ?? "default",
     background_preset: p.background_preset ?? null,
     background_key: null,
+    region: null,
     is_published: 1,
     published_at: NOW,
     created_at: NOW,

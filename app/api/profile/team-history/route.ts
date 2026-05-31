@@ -1,41 +1,28 @@
+import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth/session";
 import { findProfileByUserId } from "@/lib/db/profiles";
 import {
   upsertTeamHistory,
   findTeamHistoryByProfileId,
-  deleteTeamHistoryEntry,
+  deleteTeamHistoryEntryForProfile,
 } from "@/lib/db/team-roles";
 
-/**
- * GET /api/profile/team-history
- */
+/** GET /api/profile/team-history */
 export async function GET() {
   const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-  const profile = findProfileByUserId(user.id);
-  if (!profile) {
-    return NextResponse.json({ entries: [] });
-  }
-  const entries = findTeamHistoryByProfileId(profile.id);
-  return NextResponse.json({ entries });
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const profile = await findProfileByUserId(user.id);
+  if (!profile) return NextResponse.json({ entries: [] });
+  return NextResponse.json({ entries: await findTeamHistoryByProfileId(profile.id) });
 }
 
-/**
- * POST /api/profile/team-history
- * Add or update a team history entry.
- */
+/** POST /api/profile/team-history — add or update a team history entry. */
 export async function POST(req: Request) {
   const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-  const profile = findProfileByUserId(user.id);
-  if (!profile) {
-    return NextResponse.json({ error: "No profile" }, { status: 404 });
-  }
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const profile = await findProfileByUserId(user.id);
+  if (!profile) return NextResponse.json({ error: "No profile" }, { status: 404 });
 
   const body = await req.json();
   const {
@@ -71,7 +58,7 @@ export async function POST(req: Request) {
     logo = trimmed;
   }
 
-  const entry = upsertTeamHistory({
+  const entry = await upsertTeamHistory({
     id: id ?? crypto.randomUUID(),
     profile_id: profile.id,
     org_name,
@@ -91,19 +78,15 @@ export async function POST(req: Request) {
   return NextResponse.json({ entry }, { status: 201 });
 }
 
-/**
- * DELETE /api/profile/team-history
- * Delete a team history entry by id (passed in body).
- */
+/** DELETE /api/profile/team-history — ownership enforced in SQL. */
 export async function DELETE(req: Request) {
   const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const profile = await findProfileByUserId(user.id);
+  if (!profile) return NextResponse.json({ error: "No profile" }, { status: 404 });
   const body = await req.json();
-  if (!body.id) {
-    return NextResponse.json({ error: "id is required" }, { status: 400 });
-  }
-  deleteTeamHistoryEntry(body.id);
+  if (!body.id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+  const removed = await deleteTeamHistoryEntryForProfile(body.id, profile.id);
+  if (!removed) return NextResponse.json({ error: "Entry not found" }, { status: 404 });
   return NextResponse.json({ success: true });
 }

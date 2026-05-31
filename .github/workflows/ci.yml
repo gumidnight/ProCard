@@ -6,19 +6,19 @@ on:
   pull_request:
     branches: [master, main]
 
-jobs:
-  qa:
-    name: Type check, lint, build
-    runs-on: ubuntu-latest
+permissions:
+  contents: read
 
+jobs:
+  quality:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
+        uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -29,23 +29,68 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Type check
         run: pnpm typecheck
 
-      - name: Lint
-        run: pnpm lint
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Integration tests
+        run: pnpm test:integration
 
       - name: Build
         run: pnpm build
         env:
-          # Dummy values so build doesn't fail on missing env at compile time.
+          # Dummy values so the build doesn't fail on missing env at compile time.
           # Real secrets are only needed at runtime in Cloudflare.
           SESSION_SECRET: ci-dummy-session-secret-not-used-at-runtime
           DISCORD_CLIENT_ID: ci-dummy
           DISCORD_CLIENT_SECRET: ci-dummy
-          DISCORD_REDIRECT_URI: http://localhost:3000/api/auth/discord
+          DISCORD_REDIRECT_URI: http://localhost:3000/auth/callback
           RIOT_CLIENT_ID: ci-dummy
           RIOT_CLIENT_SECRET: ci-dummy
           RIOT_API_KEY: ci-dummy
           RIOT_REDIRECT_URI: http://localhost:3000/api/connect/riot/callback
           APP_URL: http://localhost:3000
+      # NOTE: `pnpm build:worker` (OpenNext) becomes a hard gate in Phase 1,
+      # once the data/storage layers are ported off better-sqlite3/node:fs.
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  deps-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit (fail on high/critical)
+        run: pnpm audit --audit-level=high
+
+  codeql:
+    name: CodeQL (SAST)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3

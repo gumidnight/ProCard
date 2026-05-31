@@ -5,7 +5,11 @@ import {
   recordViewEvent,
   countProfileViews,
 } from "@/lib/db/engagement";
-import { getOrCreateVisitorId, visitorCookieOptions } from "@/lib/auth/visitor";
+import {
+  getOrCreateVisitorId,
+  visitorCookieOptions,
+  makeSignedVisitorCookieValue,
+} from "@/lib/auth/visitor";
 import { getSessionUser } from "@/lib/auth/session";
 
 interface Params {
@@ -30,13 +34,13 @@ function referrerHost(raw: unknown): string | null {
  */
 export async function POST(req: Request, { params }: Params) {
   const { slug } = await params;
-  const profile = findProfileBySlug(slug);
+  const profile = await findProfileBySlug(slug);
   if (!profile) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   const { id: visitorId, isNew } = await getOrCreateVisitorId();
-  recordProfileView(profile.id, visitorId);
+  await recordProfileView(profile.id, visitorId);
 
   // Richer event capture (best-effort — never blocks the view count).
   try {
@@ -48,7 +52,7 @@ export async function POST(req: Request, { params }: Params) {
       req.headers.get("cf-ipcountry") ?? // Cloudflare edge
       req.headers.get("x-vercel-ip-country") ?? // (fallback)
       null;
-    recordViewEvent({
+    await recordViewEvent({
       profile_id: profile.id,
       visitor_id: visitorId,
       viewer_user_id: viewerUserId,
@@ -59,12 +63,12 @@ export async function POST(req: Request, { params }: Params) {
     // analytics is best-effort
   }
 
-  const views = countProfileViews(profile.id);
+  const views = await countProfileViews(profile.id);
 
   const res = NextResponse.json({ views });
   if (isNew) {
     const opts = visitorCookieOptions();
-    res.cookies.set(opts.name, visitorId, opts);
+    res.cookies.set(opts.name, await makeSignedVisitorCookieValue(visitorId), opts);
   }
   return res;
 }

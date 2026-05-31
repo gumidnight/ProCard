@@ -19,15 +19,15 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ profile: null });
   }
 
-  const gameConnections = findGameConnectionsByProfileId(profile.id);
-  const socialLinks = findSocialLinksByProfileId(profile.id);
-  const teamHistory = findTeamHistoryByProfileId(profile.id);
-  const rolesPlayed = findRolesPlayedByProfileId(profile.id);
+  const gameConnections = await findGameConnectionsByProfileId(profile.id);
+  const socialLinks = await findSocialLinksByProfileId(profile.id);
+  const teamHistory = await findTeamHistoryByProfileId(profile.id);
+  const rolesPlayed = await findRolesPlayedByProfileId(profile.id);
 
   return NextResponse.json({
     profile,
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   }
 
   // Check if profile already exists
-  const existing = findProfileByUserId(user.id);
+  const existing = await findProfileByUserId(user.id);
   if (existing) {
     return NextResponse.json({ error: "Profile already exists" }, { status: 409 });
   }
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const profile = createProfile({
+    const profile = await createProfile({
       id: crypto.randomUUID(),
       user_id: user.id,
       slug,
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
 
     // Set esports_role separately via updateProfile (createProfile only handles core fields)
     if (esports_role) {
-      const updated = updateProfile(profile.id, { esports_role });
+      const updated = await updateProfile(profile.id, { esports_role });
       return NextResponse.json({ profile: updated }, { status: 201 });
     }
 
@@ -95,7 +95,8 @@ export async function POST(req: Request) {
     if (message.includes("UNIQUE constraint")) {
       return NextResponse.json({ error: "Slug is already taken" }, { status: 409 });
     }
-    throw err;
+    console.error("[profile]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -109,7 +110,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile found" }, { status: 404 });
   }
@@ -122,18 +123,7 @@ export async function PATCH(req: Request) {
     "tagline",
     "bio",
     "status",
-    "status_note",
-    "current_team_name",
-    "current_team_logo_url",
-    "current_league",
-    "current_role",
-    "current_game",
     "esports_role",
-    // Background customization. NOTE: is_verified / is_pro / banner_key /
-    // background_key are intentionally NOT here — those are set by the upload
-    // routes or admin/DB, so users can't self-verify or self-upgrade.
-    "background_type",
-    "background_preset",
     "is_published",
   ] as const;
 
@@ -152,19 +142,35 @@ export async function PATCH(req: Request) {
     }
   }
 
+  // Validate current_team_logo_url scheme
+  if (
+    updates.current_team_logo_url &&
+    typeof updates.current_team_logo_url === "string"
+  ) {
+    const t = updates.current_team_logo_url.trim();
+    if (!/^https?:\/\//i.test(t)) {
+      return NextResponse.json(
+        { error: "current_team_logo_url must be an http(s) URL" },
+        { status: 400 },
+      );
+    }
+    updates.current_team_logo_url = t;
+  }
+
   // Set published_at when publishing
   if (updates.is_published === 1 && !profile.published_at) {
     updates.published_at = Math.floor(Date.now() / 1000);
   }
 
   try {
-    const updated = updateProfile(profile.id, updates);
+    const updated = await updateProfile(profile.id, updates);
     return NextResponse.json({ profile: updated });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     if (message.includes("UNIQUE constraint")) {
       return NextResponse.json({ error: "Slug is already taken" }, { status: 409 });
     }
-    throw err;
+    console.error("[profile]", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

@@ -10,10 +10,7 @@ export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
 
   if (!slug) {
-    return NextResponse.json(
-      { error: "Slug parameter required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Slug parameter required" }, { status: 400 });
   }
 
   const validation = isValidSlug(slug);
@@ -24,6 +21,6 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const available = isSlugAvailable(slug);
+  const available = await isSlugAvailable(slug);
   return NextResponse.json({ available });
 }

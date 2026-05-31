@@ -1,11 +1,12 @@
-import { getDb, ensureMigrated } from "./client";
+import crypto from "node:crypto";
+import { getDb } from "./adapter";
 import type { TeamHistoryRow, RolePlayedRow } from "@/types/db";
 
 // ---------------------------------------------------------------------------
 // Team history queries
 // ---------------------------------------------------------------------------
 
-export function upsertTeamHistory(data: {
+export async function upsertTeamHistory(data: {
   id: string;
   profile_id: string;
   org_name: string;
@@ -17,22 +18,52 @@ export function upsertTeamHistory(data: {
   end_date?: string | null;
   result_note?: string | null;
   display_order?: number;
-}): TeamHistoryRow {
-  ensureMigrated();
+}): Promise<TeamHistoryRow> {
   const db = getDb();
 
-  const existing = db.prepare("SELECT * FROM team_history WHERE id = ?").get(data.id) as
-    | TeamHistoryRow
-    | undefined;
+  // Scope the existence check to (id, profile_id) to prevent IDOR:
+  // a client-supplied id belonging to another profile won't match.
+  const existing = await db.first<TeamHistoryRow>(
+    "SELECT * FROM team_history WHERE id = ? AND profile_id = ?",
+    [data.id, data.profile_id],
+  );
 
   if (existing) {
-    db.prepare(
+    await db.run(
       `UPDATE team_history
        SET org_name = ?, tournament_name = ?, org_logo_url = ?, role = ?,
            game = ?, start_date = ?, end_date = ?, result_note = ?,
            display_order = ?
-       WHERE id = ?`,
-    ).run(
+       WHERE id = ? AND profile_id = ?`,
+      [
+        data.org_name,
+        data.tournament_name ?? null,
+        data.org_logo_url ?? null,
+        data.role ?? null,
+        data.game,
+        data.start_date ?? null,
+        data.end_date ?? null,
+        data.result_note ?? null,
+        data.display_order ?? 0,
+        data.id,
+        data.profile_id,
+      ],
+    );
+    return (await db.first<TeamHistoryRow>(
+      "SELECT * FROM team_history WHERE id = ? AND profile_id = ?",
+      [data.id, data.profile_id],
+    ))!;
+  }
+
+  // Always mint a server-side id for inserts so a client cannot hijack/collide
+  // with an id belonging to another profile (object-injection prevention).
+  const newId = crypto.randomUUID();
+  await db.run(
+    `INSERT INTO team_history (id, profile_id, org_name, tournament_name, org_logo_url, role, game, start_date, end_date, result_note, display_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      newId,
+      data.profile_id,
       data.org_name,
       data.tournament_name ?? null,
       data.org_logo_url ?? null,
@@ -42,94 +73,83 @@ export function upsertTeamHistory(data: {
       data.end_date ?? null,
       data.result_note ?? null,
       data.display_order ?? 0,
-      data.id,
-    );
-    return db
-      .prepare("SELECT * FROM team_history WHERE id = ?")
-      .get(data.id) as TeamHistoryRow;
-  }
-
-  db.prepare(
-    `INSERT INTO team_history (id, profile_id, org_name, tournament_name, org_logo_url, role, game, start_date, end_date, result_note, display_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    data.id,
-    data.profile_id,
-    data.org_name,
-    data.tournament_name ?? null,
-    data.org_logo_url ?? null,
-    data.role ?? null,
-    data.game,
-    data.start_date ?? null,
-    data.end_date ?? null,
-    data.result_note ?? null,
-    data.display_order ?? 0,
+    ],
   );
 
-  return db
-    .prepare("SELECT * FROM team_history WHERE id = ?")
-    .get(data.id) as TeamHistoryRow;
+  return (await db.first<TeamHistoryRow>("SELECT * FROM team_history WHERE id = ?", [
+    newId,
+  ]))!;
 }
 
-export function findTeamHistoryByProfileId(profileId: string): TeamHistoryRow[] {
-  ensureMigrated();
-  const db = getDb();
-  return db
-    .prepare("SELECT * FROM team_history WHERE profile_id = ? ORDER BY display_order")
-    .all(profileId) as TeamHistoryRow[];
+export async function findTeamHistoryByProfileId(
+  profileId: string,
+): Promise<TeamHistoryRow[]> {
+  return getDb().all<TeamHistoryRow>(
+    "SELECT * FROM team_history WHERE profile_id = ? ORDER BY display_order",
+    [profileId],
+  );
 }
 
-export function deleteTeamHistoryEntry(id: string): void {
-  ensureMigrated();
-  const db = getDb();
-  db.prepare("DELETE FROM team_history WHERE id = ?").run(id);
+/**
+ * Delete a team-history entry the caller owns.
+ * Scoped by profile_id to prevent IDOR. Returns true if a row was deleted.
+ */
+export async function deleteTeamHistoryEntryForProfile(
+  id: string,
+  profileId: string,
+): Promise<boolean> {
+  const res = await getDb().run(
+    "DELETE FROM team_history WHERE id = ? AND profile_id = ?",
+    [id, profileId],
+  );
+  return res.changes > 0;
 }
 
 // ---------------------------------------------------------------------------
 // Roles played queries
 // ---------------------------------------------------------------------------
 
-export function upsertRolePlayed(data: {
+export async function upsertRolePlayed(data: {
   id: string;
   profile_id: string;
   game: string;
   role: string;
   is_main?: number;
   display_order?: number;
-}): RolePlayedRow {
-  ensureMigrated();
+}): Promise<RolePlayedRow> {
   const db = getDb();
 
-  db.prepare(
+  await db.run(
     `INSERT INTO roles_played (id, profile_id, game, role, is_main, display_order)
      VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT (profile_id, game, role) DO UPDATE SET
        is_main = excluded.is_main,
        display_order = excluded.display_order`,
-  ).run(
-    data.id,
-    data.profile_id,
-    data.game,
-    data.role,
-    data.is_main ?? 0,
-    data.display_order ?? 0,
+    [
+      data.id,
+      data.profile_id,
+      data.game,
+      data.role,
+      data.is_main ?? 0,
+      data.display_order ?? 0,
+    ],
   );
 
-  return db
-    .prepare("SELECT * FROM roles_played WHERE profile_id = ? AND game = ? AND role = ?")
-    .get(data.profile_id, data.game, data.role) as RolePlayedRow;
+  return (await db.first<RolePlayedRow>(
+    "SELECT * FROM roles_played WHERE profile_id = ? AND game = ? AND role = ?",
+    [data.profile_id, data.game, data.role],
+  ))!;
 }
 
-export function findRolesPlayedByProfileId(profileId: string): RolePlayedRow[] {
-  ensureMigrated();
-  const db = getDb();
-  return db
-    .prepare("SELECT * FROM roles_played WHERE profile_id = ? ORDER BY display_order")
-    .all(profileId) as RolePlayedRow[];
+export async function findRolesPlayedByProfileId(
+  profileId: string,
+): Promise<RolePlayedRow[]> {
+  return getDb().all<RolePlayedRow>(
+    "SELECT * FROM roles_played WHERE profile_id = ? ORDER BY display_order",
+    [profileId],
+  );
 }
 
-export function deleteRolesPlayedByProfile(profileId: string): void {
-  ensureMigrated();
-  const db = getDb();
-  db.prepare("DELETE FROM roles_played WHERE profile_id = ?").run(profileId);
+export async function deleteRolesPlayedByProfile(profileId: string): Promise<void> {
+  await getDb().run("DELETE FROM roles_played WHERE profile_id = ?", [profileId]);
 }

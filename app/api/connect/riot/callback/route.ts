@@ -21,9 +21,7 @@ export async function GET(req: NextRequest) {
   const error = url.searchParams.get("error");
 
   if (error) {
-    return NextResponse.redirect(
-      new URL(`/onboarding?error=riot_${error}`, req.url),
-    );
+    return NextResponse.redirect(new URL(`/onboarding?error=riot_${error}`, req.url));
   }
 
   if (!code || !state) {
@@ -48,11 +46,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
-    return NextResponse.redirect(
-      new URL("/onboarding?error=no_profile", req.url),
-    );
+    return NextResponse.redirect(new URL("/onboarding?error=no_profile", req.url));
   }
 
   try {
@@ -63,21 +59,23 @@ export async function GET(req: NextRequest) {
     // Fetch Riot account
     const account = await fetchRiotAccountByToken(tokens.access_token);
 
+    const region =
+      (profile.region as import("@/lib/api/riot").RiotRegion | null) ?? "na1";
+    const accountName = `${account.gameName}#${account.tagLine}`;
+
     // Fetch LoL rank (may fail if account doesn't play LoL)
     let soloQ: { tier: string; rank: string; leaguePoints: number } | undefined;
     let summonerId: string | undefined;
     try {
-      const lolRank = await fetchLolRankByPuuid(account.puuid, "na1");
+      const lolRank = await fetchLolRankByPuuid(account.puuid, region);
       summonerId = lolRank.summoner.id;
       soloQ = lolRank.soloQueue;
     } catch {
       // Not a LoL player — that's fine
     }
 
-    const accountName = `${account.gameName}#${account.tagLine}`;
-
     // Save LoL connection
-    upsertGameConnection({
+    await upsertGameConnection({
       id: crypto.randomUUID(),
       profile_id: profile.id,
       game: "lol",
@@ -91,10 +89,11 @@ export async function GET(req: NextRequest) {
       rank_division: soloQ?.rank ?? null,
       lp_rr: soloQ?.leaguePoints ?? null,
       queue_type: "RANKED_SOLO_5x5",
+      region,
     });
 
     // Save Valorant connection (shares PUUID)
-    upsertGameConnection({
+    await upsertGameConnection({
       id: crypto.randomUUID(),
       profile_id: profile.id,
       game: "valorant",
@@ -104,6 +103,7 @@ export async function GET(req: NextRequest) {
       riot_refresh_token: tokens.refresh_token,
       riot_token_expires_at: expiresAt,
       queue_type: "competitive",
+      region,
     });
 
     return NextResponse.redirect(

@@ -13,13 +13,15 @@ export default async function AppearancePage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) redirect("/onboarding");
 
-  const gameConnections = findGameConnectionsByProfileId(profile.id);
-  const socialLinks = findSocialLinksByProfileId(profile.id);
-  const teamHistory = findTeamHistoryByProfileId(profile.id);
-  const rolesPlayed = findRolesPlayedByProfileId(profile.id);
+  const [gameConnections, socialLinks, teamHistory, rolesPlayed] = await Promise.all([
+    findGameConnectionsByProfileId(profile.id),
+    findSocialLinksByProfileId(profile.id),
+    findTeamHistoryByProfileId(profile.id),
+    findRolesPlayedByProfileId(profile.id),
+  ]);
 
   return (
     <AppearanceClient

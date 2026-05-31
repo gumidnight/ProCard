@@ -5,7 +5,7 @@ import { findProfileByUserId } from "@/lib/db/profiles";
 import {
   upsertGameConnection,
   findGameConnectionsByProfileId,
-  setGameConnectionVisibilityById,
+  setGameConnectionVisibilityForProfile,
 } from "@/lib/db/game-connections";
 import { parseLolprosSlug, fetchLolprosProfile } from "@/lib/api/lolpros";
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile" }, { status: 404 });
   }
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   // Pre-fetch existing LoL connections so we can distinguish new vs. updated
   // and only auto-hide *newly* imported smurfs (never override a prior choice).
   const existingPuuids = new Set(
-    findGameConnectionsByProfileId(profile.id)
+    (await findGameConnectionsByProfileId(profile.id))
       .filter((c) => c.game === "lol" && c.puuid)
       .map((c) => c.puuid as string),
   );
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
   let updated = 0;
   for (const acc of lolpros.accounts) {
     const isNew = !existingPuuids.has(acc.puuid);
-    const conn = upsertGameConnection({
+    const conn = await upsertGameConnection({
       id: crypto.randomUUID(),
       profile_id: profile.id,
       game: "lol",
@@ -100,7 +100,8 @@ export async function POST(req: Request) {
     if (isNew) {
       imported++;
       // Hide unranked smurfs by default to keep the public card focused.
-      if (!acc.rankTier) setGameConnectionVisibilityById(conn.id, false);
+      if (!acc.rankTier)
+        await setGameConnectionVisibilityForProfile(conn.id, profile.id, false);
     } else {
       updated++;
     }

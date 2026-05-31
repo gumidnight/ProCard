@@ -70,6 +70,8 @@ export interface ProfileRow {
   background_preset: string | null;
   /** Uploaded background image key (served via /api/profile/background) when background_type === "custom". */
   background_key: string | null;
+  /** Riot platform region (na1, euw1, eun1, kr, …) — used for rank API routing. */
+  region: string | null;
   is_published: number; // 0 | 1
   published_at: number | null;
   created_at: number;

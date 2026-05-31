@@ -14,7 +14,7 @@ interface Params {
  */
 export async function POST(req: Request, { params }: Params) {
   const { slug } = await params;
-  const profile = findProfileBySlug(slug);
+  const profile = await findProfileBySlug(slug);
   if (!profile) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -31,12 +31,13 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   // Verify the link belongs to this profile (prevents cross-profile spoofing).
-  const link = findSocialLinksByProfileId(profile.id).find((l) => l.id === linkId);
+  const links = await findSocialLinksByProfileId(profile.id);
+  const link = links.find((l) => l.id === linkId);
   if (!link) {
     return NextResponse.json({ error: "Unknown link" }, { status: 404 });
   }
 
-  recordSocialClick({
+  await recordSocialClick({
     profile_id: profile.id,
     social_link_id: link.id,
     platform: link.platform,

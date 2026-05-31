@@ -13,10 +13,6 @@ import { findUserById } from "@/lib/db/users";
 const SESSION_COOKIE = "procard_session";
 const SESSION_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
 
-/**
- * Create a new session for a user.
- * Returns the cookie name/value/options so the caller can set it on a response.
- */
 export function createSession(userId: string): {
   cookieName: string;
   cookieValue: string;
@@ -37,7 +33,7 @@ export function createSession(userId: string): {
     cookieValue: signed,
     cookieOptions: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: true,
       sameSite: "lax",
       path: "/",
       maxAge: SESSION_TTL,
@@ -45,10 +41,6 @@ export function createSession(userId: string): {
   };
 }
 
-/**
- * Get the current user from the session cookie.
- * Returns null if no valid session exists.
- */
 export async function getSessionUser(): Promise<UserRow | null> {
   const cookieStore = await cookies();
   const signed = cookieStore.get(SESSION_COOKIE)?.value;
@@ -64,21 +56,17 @@ export async function getSessionUser(): Promise<UserRow | null> {
   const createdAt = parseInt(payload.slice(colonIdx + 1), 10);
   if (isNaN(createdAt)) return null;
 
-  // Check expiry
   const now = Math.floor(Date.now() / 1000);
   if (now - createdAt > SESSION_TTL) return null;
 
-  return findUserById(userId);
+  return await findUserById(userId);
 }
 
-/**
- * Destroy the current session.
- */
 export async function destroySession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: true,
     sameSite: "lax",
     path: "/",
     maxAge: 0,
@@ -86,7 +74,7 @@ export async function destroySession(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// HMAC signing — payload.hmac
+// HMAC signing
 // ---------------------------------------------------------------------------
 
 function signPayload(payload: string): string {
@@ -109,7 +97,6 @@ function verifyPayload(signed: string): string | null {
     .update(payload)
     .digest("hex");
 
-  // Timing-safe comparison
   if (sig.length !== expected.length) return null;
   const sigBuf = Buffer.from(sig, "hex");
   const expectedBuf = Buffer.from(expected, "hex");

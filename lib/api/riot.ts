@@ -104,8 +104,13 @@ export async function fetchRiotAccountByToken(
 ): Promise<RiotAccount> {
   const res = await fetch(`${accountBase(region)}/riot/account/v1/accounts/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(8000),
   });
 
+  if (res.status === 429) {
+    const retry = res.headers.get("Retry-After");
+    throw new Error(`RATE_LIMITED:${retry ?? "60"}`);
+  }
   if (!res.ok) {
     throw new Error(`Riot account fetch failed: ${res.status}`);
   }
@@ -121,9 +126,16 @@ export async function fetchRiotAccountByRiotId(
 ): Promise<RiotAccount> {
   const res = await fetch(
     `${accountBase(region)}/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(gameName)}/${encodeURIComponent(tagLine)}`,
-    { headers: { "X-Riot-Token": config.riot.apiKey } },
+    {
+      headers: { "X-Riot-Token": config.riot.apiKey },
+      signal: AbortSignal.timeout(8000),
+    },
   );
 
+  if (res.status === 429) {
+    const retry = res.headers.get("Retry-After");
+    throw new Error(`RATE_LIMITED:${retry ?? "60"}`);
+  }
   if (res.status === 404) {
     throw new Error("Riot account not found. Check your Riot ID and region.");
   }
@@ -145,9 +157,16 @@ export async function fetchLolSummoner(
 ): Promise<LolSummoner> {
   const res = await fetch(
     `${lolBase(region)}/lol/summoner/v4/summoners/by-puuid/${puuid}`,
-    { headers: { "X-Riot-Token": config.riot.apiKey } },
+    {
+      headers: { "X-Riot-Token": config.riot.apiKey },
+      signal: AbortSignal.timeout(8000),
+    },
   );
 
+  if (res.status === 429) {
+    const retry = res.headers.get("Retry-After");
+    throw new Error(`RATE_LIMITED:${retry ?? "60"}`);
+  }
   if (res.status === 404) {
     throw new Error(
       "Summoner not found for this PUUID. The account may not play LoL on this region.",
@@ -167,8 +186,13 @@ export async function fetchLolRankedEntriesByPuuid(
 ): Promise<LolLeagueEntry[]> {
   const res = await fetch(`${lolBase(region)}/lol/league/v4/entries/by-puuid/${puuid}`, {
     headers: { "X-Riot-Token": config.riot.apiKey },
+    signal: AbortSignal.timeout(8000),
   });
 
+  if (res.status === 429) {
+    const retry = res.headers.get("Retry-After");
+    throw new Error(`RATE_LIMITED:${retry ?? "60"}`);
+  }
   if (!res.ok) {
     throw new Error(`LoL ranked fetch failed: ${res.status}`);
   }
@@ -183,9 +207,16 @@ export async function fetchLolRankedEntries(
 ): Promise<LolLeagueEntry[]> {
   const res = await fetch(
     `${lolBase(region)}/lol/league/v4/entries/by-summoner/${summonerId}`,
-    { headers: { "X-Riot-Token": config.riot.apiKey } },
+    {
+      headers: { "X-Riot-Token": config.riot.apiKey },
+      signal: AbortSignal.timeout(8000),
+    },
   );
 
+  if (res.status === 429) {
+    const retry = res.headers.get("Retry-After");
+    throw new Error(`RATE_LIMITED:${retry ?? "60"}`);
+  }
   if (!res.ok) {
     throw new Error(`LoL ranked fetch failed: ${res.status}`);
   }
@@ -237,8 +268,15 @@ export async function fetchTftRankByPuuid(
 
   const res = await fetch(
     `${lolBase(region)}/tft/league/v1/entries/by-summoner/${summonerId}`,
-    { headers: { "X-Riot-Token": config.riot.apiKey } },
+    {
+      headers: { "X-Riot-Token": config.riot.apiKey },
+      signal: AbortSignal.timeout(8000),
+    },
   );
+  if (res.status === 429) {
+    const retry = res.headers.get("Retry-After");
+    throw new Error(`RATE_LIMITED:${retry ?? "60"}`);
+  }
   if (!res.ok) return null;
   const entries: LolLeagueEntry[] = await res.json();
   return entries.find((e) => e.queueType === "RANKED_TFT") ?? null;

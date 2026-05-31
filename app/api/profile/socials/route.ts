@@ -25,11 +25,11 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ links: [] });
   }
-  const links = findSocialLinksByProfileId(profile.id);
+  const links = await findSocialLinksByProfileId(profile.id);
   return NextResponse.json({ links });
 }
 
@@ -42,7 +42,7 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile" }, { status: 404 });
   }
@@ -51,28 +51,27 @@ export async function POST(req: Request) {
   const { links } = body;
 
   if (!Array.isArray(links)) {
-    return NextResponse.json(
-      { error: "links must be an array" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "links must be an array" }, { status: 400 });
   }
 
-  const inserted = links
-    .filter(
-      (l: { platform: string; handle_or_url: string }) =>
-        VALID_PLATFORMS.includes(l.platform as SocialPlatform) &&
-        l.handle_or_url?.trim(),
-    )
-    .map(
-      (l: { platform: SocialPlatform; handle_or_url: string }, i: number) =>
-        upsertSocialLink({
-          id: crypto.randomUUID(),
-          profile_id: profile.id,
-          platform: l.platform,
-          handle_or_url: l.handle_or_url.trim(),
-          display_order: i,
-        }),
-    );
+  const inserted = await Promise.all(
+    links
+      .filter(
+        (l: { platform: string; handle_or_url: string }) =>
+          VALID_PLATFORMS.includes(l.platform as SocialPlatform) &&
+          l.handle_or_url?.trim(),
+      )
+      .map(
+        async (l: { platform: SocialPlatform; handle_or_url: string }, i: number) =>
+          await upsertSocialLink({
+            id: crypto.randomUUID(),
+            profile_id: profile.id,
+            platform: l.platform,
+            handle_or_url: l.handle_or_url.trim(),
+            display_order: i,
+          }),
+      ),
+  );
 
   return NextResponse.json({ links: inserted }, { status: 201 });
 }
@@ -86,17 +85,14 @@ export async function DELETE(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile" }, { status: 404 });
   }
   const body = await req.json();
   if (!body.platform) {
-    return NextResponse.json(
-      { error: "platform is required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "platform is required" }, { status: 400 });
   }
-  deleteSocialLink(profile.id, body.platform);
+  await deleteSocialLink(profile.id, body.platform);
   return NextResponse.json({ success: true });
 }

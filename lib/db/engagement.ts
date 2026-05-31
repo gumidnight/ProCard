@@ -1,28 +1,28 @@
-import { getDb, ensureMigrated } from "./client";
+import { getDb } from "./adapter";
 import type { ProfileCommentRow, ProfileCommentWithAuthor } from "@/types/db";
 
 // ---------------------------------------------------------------------------
 // Views (anonymous, deduped per visitor_id)
 // ---------------------------------------------------------------------------
 
-export function countProfileViews(profileId: string): number {
-  ensureMigrated();
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS n FROM profile_views WHERE profile_id = ?")
-    .get(profileId) as { n: number };
-  return row.n;
+export async function countProfileViews(profileId: string): Promise<number> {
+  const row = await getDb().first<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM profile_views WHERE profile_id = ?",
+    [profileId],
+  );
+  return row?.n ?? 0;
 }
 
 /** Insert a (profile, visitor) view row, ignoring duplicates. Returns true if newly inserted. */
-export function recordProfileView(profileId: string, visitorId: string): boolean {
-  ensureMigrated();
-  const db = getDb();
-  const res = db
-    .prepare(
-      `INSERT OR IGNORE INTO profile_views (id, profile_id, visitor_id)
-       VALUES (?, ?, ?)`,
-    )
-    .run(crypto.randomUUID(), profileId, visitorId);
+export async function recordProfileView(
+  profileId: string,
+  visitorId: string,
+): Promise<boolean> {
+  const res = await getDb().run(
+    `INSERT OR IGNORE INTO profile_views (id, profile_id, visitor_id)
+     VALUES (?, ?, ?)`,
+    [crypto.randomUUID(), profileId, visitorId],
+  );
   return res.changes > 0;
 }
 
@@ -30,244 +30,215 @@ export function recordProfileView(profileId: string, visitorId: string): boolean
 // Likes (anonymous toggle)
 // ---------------------------------------------------------------------------
 
-export function countProfileLikes(profileId: string): number {
-  ensureMigrated();
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS n FROM profile_likes WHERE profile_id = ?")
-    .get(profileId) as { n: number };
-  return row.n;
+export async function countProfileLikes(profileId: string): Promise<number> {
+  const row = await getDb().first<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM profile_likes WHERE profile_id = ?",
+    [profileId],
+  );
+  return row?.n ?? 0;
 }
 
-export function hasVisitorLiked(profileId: string, visitorId: string): boolean {
-  ensureMigrated();
-  const row = getDb()
-    .prepare("SELECT 1 AS x FROM profile_likes WHERE profile_id = ? AND visitor_id = ?")
-    .get(profileId, visitorId) as { x: number } | undefined;
+export async function hasVisitorLiked(
+  profileId: string,
+  visitorId: string,
+): Promise<boolean> {
+  const row = await getDb().first<{ x: number }>(
+    "SELECT 1 AS x FROM profile_likes WHERE profile_id = ? AND visitor_id = ?",
+    [profileId, visitorId],
+  );
   return !!row;
 }
 
 /** Toggles a like for the visitor. Returns the new liked state. */
-export function toggleProfileLike(
+export async function toggleProfileLike(
   profileId: string,
   visitorId: string,
-): { liked: boolean; total: number } {
-  ensureMigrated();
+): Promise<{ liked: boolean; total: number }> {
   const db = getDb();
-  const existing = db
-    .prepare("SELECT id FROM profile_likes WHERE profile_id = ? AND visitor_id = ?")
-    .get(profileId, visitorId) as { id: string } | undefined;
+  const existing = await db.first<{ id: string }>(
+    "SELECT id FROM profile_likes WHERE profile_id = ? AND visitor_id = ?",
+    [profileId, visitorId],
+  );
 
   if (existing) {
-    db.prepare("DELETE FROM profile_likes WHERE id = ?").run(existing.id);
+    await db.run("DELETE FROM profile_likes WHERE id = ?", [existing.id]);
   } else {
-    db.prepare(
-      `INSERT INTO profile_likes (id, profile_id, visitor_id)
-       VALUES (?, ?, ?)`,
-    ).run(crypto.randomUUID(), profileId, visitorId);
+    await db.run(
+      `INSERT INTO profile_likes (id, profile_id, visitor_id) VALUES (?, ?, ?)`,
+      [crypto.randomUUID(), profileId, visitorId],
+    );
   }
 
-  return {
-    liked: !existing,
-    total: countProfileLikes(profileId),
-  };
+  return { liked: !existing, total: await countProfileLikes(profileId) };
 }
 
 // ---------------------------------------------------------------------------
 // Comments (require login)
 // ---------------------------------------------------------------------------
 
-export function findCommentsByProfileId(profileId: string): ProfileCommentWithAuthor[] {
-  ensureMigrated();
-  return getDb()
-    .prepare(
-      `SELECT
-         c.id, c.profile_id, c.user_id, c.body, c.created_at,
-         u.username       AS author_username,
-         u.avatar_url     AS author_avatar_url,
-         p.slug           AS author_slug
-       FROM profile_comments c
-       JOIN users    u ON u.id = c.user_id
-       LEFT JOIN profiles p ON p.user_id = u.id
-       WHERE c.profile_id = ?
-       ORDER BY c.created_at DESC`,
-    )
-    .all(profileId) as ProfileCommentWithAuthor[];
-}
-
-export function countCommentsByProfileId(profileId: string): number {
-  ensureMigrated();
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS n FROM profile_comments WHERE profile_id = ?")
-    .get(profileId) as { n: number };
-  return row.n;
-}
-
-export function createComment(args: {
-  profile_id: string;
-  user_id: string;
-  body: string;
-}): ProfileCommentRow {
-  ensureMigrated();
-  const db = getDb();
-  const id = crypto.randomUUID();
-  db.prepare(
-    `INSERT INTO profile_comments (id, profile_id, user_id, body)
-     VALUES (?, ?, ?, ?)`,
-  ).run(id, args.profile_id, args.user_id, args.body);
-  return db
-    .prepare("SELECT * FROM profile_comments WHERE id = ?")
-    .get(id) as ProfileCommentRow;
-}
-
-export function findCommentById(id: string): ProfileCommentRow | null {
-  ensureMigrated();
-  return (
-    (getDb().prepare("SELECT * FROM profile_comments WHERE id = ?").get(id) as
-      | ProfileCommentRow
-      | undefined) ?? null
+export async function findCommentsByProfileId(
+  profileId: string,
+): Promise<ProfileCommentWithAuthor[]> {
+  return getDb().all<ProfileCommentWithAuthor>(
+    `SELECT
+       c.id, c.profile_id, c.user_id, c.body, c.created_at,
+       u.username       AS author_username,
+       u.avatar_url     AS author_avatar_url,
+       p.slug           AS author_slug
+     FROM profile_comments c
+     JOIN users    u ON u.id = c.user_id
+     LEFT JOIN profiles p ON p.user_id = u.id
+     WHERE c.profile_id = ?
+     ORDER BY c.created_at DESC`,
+    [profileId],
   );
 }
 
-export function deleteCommentById(id: string): void {
-  ensureMigrated();
-  getDb().prepare("DELETE FROM profile_comments WHERE id = ?").run(id);
+export async function countCommentsByProfileId(profileId: string): Promise<number> {
+  const row = await getDb().first<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM profile_comments WHERE profile_id = ?",
+    [profileId],
+  );
+  return row?.n ?? 0;
+}
+
+export async function createComment(args: {
+  profile_id: string;
+  user_id: string;
+  body: string;
+}): Promise<ProfileCommentRow> {
+  const db = getDb();
+  const id = crypto.randomUUID();
+  await db.run(
+    `INSERT INTO profile_comments (id, profile_id, user_id, body) VALUES (?, ?, ?, ?)`,
+    [id, args.profile_id, args.user_id, args.body],
+  );
+  return (await db.first<ProfileCommentRow>(
+    "SELECT * FROM profile_comments WHERE id = ?",
+    [id],
+  ))!;
+}
+
+export async function findCommentById(id: string): Promise<ProfileCommentRow | null> {
+  return getDb().first<ProfileCommentRow>("SELECT * FROM profile_comments WHERE id = ?", [
+    id,
+  ]);
+}
+
+export async function deleteCommentById(id: string): Promise<void> {
+  await getDb().run("DELETE FROM profile_comments WHERE id = ?", [id]);
 }
 
 // ---------------------------------------------------------------------------
 // Social link clicks (raw outbound-click counter, per platform)
 // ---------------------------------------------------------------------------
 
-/** Records a single outbound click on one of a profile's social links. */
-export function recordSocialClick(args: {
+export async function recordSocialClick(args: {
   profile_id: string;
   social_link_id: string;
   platform: string;
-}): void {
-  ensureMigrated();
-  getDb()
-    .prepare(
-      `INSERT INTO social_link_clicks (id, profile_id, social_link_id, platform)
-       VALUES (?, ?, ?, ?)`,
-    )
-    .run(crypto.randomUUID(), args.profile_id, args.social_link_id, args.platform);
+}): Promise<void> {
+  await getDb().run(
+    `INSERT INTO social_link_clicks (id, profile_id, social_link_id, platform)
+     VALUES (?, ?, ?, ?)`,
+    [crypto.randomUUID(), args.profile_id, args.social_link_id, args.platform],
+  );
 }
 
-export function countSocialClicksByProfileId(profileId: string): number {
-  ensureMigrated();
-  const row = getDb()
-    .prepare("SELECT COUNT(*) AS n FROM social_link_clicks WHERE profile_id = ?")
-    .get(profileId) as { n: number };
-  return row.n;
+export async function countSocialClicksByProfileId(profileId: string): Promise<number> {
+  const row = await getDb().first<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM social_link_clicks WHERE profile_id = ?",
+    [profileId],
+  );
+  return row?.n ?? 0;
 }
 
-/** Click totals grouped by platform, highest first. */
-export function countSocialClicksByPlatform(
+export async function countSocialClicksByPlatform(
   profileId: string,
-): { platform: string; clicks: number }[] {
-  ensureMigrated();
-  return getDb()
-    .prepare(
-      `SELECT platform, COUNT(*) AS clicks
-       FROM social_link_clicks
-       WHERE profile_id = ?
-       GROUP BY platform
-       ORDER BY clicks DESC`,
-    )
-    .all(profileId) as { platform: string; clicks: number }[];
+): Promise<{ platform: string; clicks: number }[]> {
+  return getDb().all<{ platform: string; clicks: number }>(
+    `SELECT platform, COUNT(*) AS clicks
+     FROM social_link_clicks
+     WHERE profile_id = ?
+     GROUP BY platform
+     ORDER BY clicks DESC`,
+    [profileId],
+  );
 }
 
 // ---------------------------------------------------------------------------
 // View events (per-view stream: recent activity, geography, live counts)
 // ---------------------------------------------------------------------------
 
-/** Skip re-logging the same visitor on a profile within this window (seconds). */
 const VIEW_EVENT_DEDUP_WINDOW = 1800; // 30 min
 
-/**
- * Records a single view event. Deduped per (profile, visitor) within a
- * 30-minute window so refreshes don't spam the activity feed / live counts.
- * Returns true if a new event row was inserted.
- */
-export function recordViewEvent(args: {
+export async function recordViewEvent(args: {
   profile_id: string;
   visitor_id: string;
   viewer_user_id?: string | null;
   referrer?: string | null;
   country?: string | null;
-}): boolean {
-  ensureMigrated();
+}): Promise<boolean> {
   const db = getDb();
-  const recent = db
-    .prepare(
-      `SELECT 1 AS x FROM profile_view_events
-       WHERE profile_id = ? AND visitor_id = ?
-         AND created_at > unixepoch() - ?`,
-    )
-    .get(args.profile_id, args.visitor_id, VIEW_EVENT_DEDUP_WINDOW) as
-    | { x: number }
-    | undefined;
+  const recent = await db.first<{ x: number }>(
+    `SELECT 1 AS x FROM profile_view_events
+     WHERE profile_id = ? AND visitor_id = ?
+       AND created_at > unixepoch() - ?`,
+    [args.profile_id, args.visitor_id, VIEW_EVENT_DEDUP_WINDOW],
+  );
   if (recent) return false;
 
-  db.prepare(
+  await db.run(
     `INSERT INTO profile_view_events
        (id, profile_id, visitor_id, viewer_user_id, referrer, country)
      VALUES (?, ?, ?, ?, ?, ?)`,
-  ).run(
-    crypto.randomUUID(),
-    args.profile_id,
-    args.visitor_id,
-    args.viewer_user_id ?? null,
-    args.referrer ?? null,
-    args.country ?? null,
+    [
+      crypto.randomUUID(),
+      args.profile_id,
+      args.visitor_id,
+      args.viewer_user_id ?? null,
+      args.referrer ?? null,
+      args.country ?? null,
+    ],
   );
   return true;
 }
 
-/** View-event count since a unix timestamp (for "last 24h" / "last hour"). */
-export function countViewEventsSince(profileId: string, sinceTs: number): number {
-  ensureMigrated();
-  const row = getDb()
-    .prepare(
-      `SELECT COUNT(*) AS n FROM profile_view_events
-       WHERE profile_id = ? AND created_at >= ?`,
-    )
-    .get(profileId, sinceTs) as { n: number };
-  return row.n;
+export async function countViewEventsSince(
+  profileId: string,
+  sinceTs: number,
+): Promise<number> {
+  const row = await getDb().first<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM profile_view_events
+     WHERE profile_id = ? AND created_at >= ?`,
+    [profileId, sinceTs],
+  );
+  return row?.n ?? 0;
 }
 
-/** View counts grouped by country, highest first. NULL countries excluded. */
-export function countViewsByCountry(
+export async function countViewsByCountry(
   profileId: string,
-): { country: string; views: number }[] {
-  ensureMigrated();
-  return getDb()
-    .prepare(
-      `SELECT country, COUNT(*) AS views
-       FROM profile_view_events
-       WHERE profile_id = ? AND country IS NOT NULL AND country <> ''
-       GROUP BY country
-       ORDER BY views DESC`,
-    )
-    .all(profileId) as { country: string; views: number }[];
+): Promise<{ country: string; views: number }[]> {
+  return getDb().all<{ country: string; views: number }>(
+    `SELECT country, COUNT(*) AS views
+     FROM profile_view_events
+     WHERE profile_id = ? AND country IS NOT NULL AND country <> ''
+     GROUP BY country
+     ORDER BY views DESC`,
+    [profileId],
+  );
 }
 
-/**
- * Distinct signed-in viewers grouped by their primary esports role.
- * Powers the free "3 coaches, 2 managers viewed you" preview.
- * (Identities stay paywalled — this is counts only.)
- */
-export function countViewersByRole(
+export async function countViewersByRole(
   profileId: string,
-): { role: string; viewers: number }[] {
-  ensureMigrated();
-  const rows = getDb()
-    .prepare(
-      `SELECT DISTINCT e.viewer_user_id AS user_id, p.esports_role AS roles
-       FROM profile_view_events e
-       JOIN profiles p ON p.user_id = e.viewer_user_id
-       WHERE e.profile_id = ? AND e.viewer_user_id IS NOT NULL`,
-    )
-    .all(profileId) as { user_id: string; roles: string | null }[];
+): Promise<{ role: string; viewers: number }[]> {
+  const rows = await getDb().all<{ user_id: string; roles: string | null }>(
+    `SELECT DISTINCT e.viewer_user_id AS user_id, p.esports_role AS roles
+     FROM profile_view_events e
+     JOIN profiles p ON p.user_id = e.viewer_user_id
+     WHERE e.profile_id = ? AND e.viewer_user_id IS NOT NULL`,
+    [profileId],
+  );
 
   const counts = new Map<string, number>();
   for (const r of rows) {
@@ -280,7 +251,7 @@ export function countViewersByRole(
 }
 
 // ---------------------------------------------------------------------------
-// Recent activity feed (merged stream across engagement types)
+// Recent activity feed
 // ---------------------------------------------------------------------------
 
 export type ActivityKind = "view" | "like" | "comment" | "click";
@@ -288,53 +259,39 @@ export type ActivityKind = "view" | "like" | "comment" | "click";
 export interface ActivityItem {
   kind: ActivityKind;
   created_at: number;
-  /** view: ISO country code (nullable) */
   country?: string | null;
-  /** view: primary esports role of a signed-in viewer (nullable, free tier) */
   viewerRole?: string | null;
-  /** click: social platform */
   platform?: string | null;
 }
 
-/** Most recent engagement events across views, likes, comments, and clicks. */
-export function findRecentActivity(profileId: string, limit = 12): ActivityItem[] {
-  ensureMigrated();
+export async function findRecentActivity(
+  profileId: string,
+  limit = 12,
+): Promise<ActivityItem[]> {
   const db = getDb();
 
-  const views = db
-    .prepare(
+  const [views, likes, comments, clicks] = await Promise.all([
+    db.all<{ created_at: number; country: string | null; roles: string | null }>(
       `SELECT e.created_at, e.country, p.esports_role AS roles
        FROM profile_view_events e
        LEFT JOIN profiles p ON p.user_id = e.viewer_user_id
        WHERE e.profile_id = ?
        ORDER BY e.created_at DESC LIMIT ?`,
-    )
-    .all(profileId, limit) as {
-    created_at: number;
-    country: string | null;
-    roles: string | null;
-  }[];
-
-  const likes = db
-    .prepare(
-      `SELECT created_at FROM profile_likes
-       WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
-    )
-    .all(profileId, limit) as { created_at: number }[];
-
-  const comments = db
-    .prepare(
-      `SELECT created_at FROM profile_comments
-       WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
-    )
-    .all(profileId, limit) as { created_at: number }[];
-
-  const clicks = db
-    .prepare(
-      `SELECT created_at, platform FROM social_link_clicks
-       WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
-    )
-    .all(profileId, limit) as { created_at: number; platform: string }[];
+      [profileId, limit],
+    ),
+    db.all<{ created_at: number }>(
+      `SELECT created_at FROM profile_likes WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
+      [profileId, limit],
+    ),
+    db.all<{ created_at: number }>(
+      `SELECT created_at FROM profile_comments WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
+      [profileId, limit],
+    ),
+    db.all<{ created_at: number; platform: string }>(
+      `SELECT created_at, platform FROM social_link_clicks WHERE profile_id = ? ORDER BY created_at DESC LIMIT ?`,
+      [profileId, limit],
+    ),
+  ]);
 
   const items: ActivityItem[] = [
     ...views.map((v) => ({
@@ -344,10 +301,7 @@ export function findRecentActivity(profileId: string, limit = 12): ActivityItem[
       viewerRole: v.roles ? v.roles.split(",")[0].trim() || null : null,
     })),
     ...likes.map((l) => ({ kind: "like" as const, created_at: l.created_at })),
-    ...comments.map((c) => ({
-      kind: "comment" as const,
-      created_at: c.created_at,
-    })),
+    ...comments.map((c) => ({ kind: "comment" as const, created_at: c.created_at })),
     ...clicks.map((c) => ({
       kind: "click" as const,
       created_at: c.created_at,
@@ -368,7 +322,6 @@ export interface ProfileAnalytics {
   comments: number;
   socialClicks: number;
   clicksByPlatform: { platform: string; clicks: number }[];
-  // Free trio
   viewsLast24h: number;
   viewsLastHour: number;
   viewsByCountry: { country: string; views: number }[];
@@ -376,18 +329,41 @@ export interface ProfileAnalytics {
   recentActivity: ActivityItem[];
 }
 
-export function getProfileAnalytics(profileId: string): ProfileAnalytics {
+export async function getProfileAnalytics(profileId: string): Promise<ProfileAnalytics> {
   const now = Math.floor(Date.now() / 1000);
+  const [
+    views,
+    likes,
+    comments,
+    socialClicks,
+    clicksByPlatform,
+    viewsLast24h,
+    viewsLastHour,
+    viewsByCountry,
+    viewersByRole,
+    recentActivity,
+  ] = await Promise.all([
+    countProfileViews(profileId),
+    countProfileLikes(profileId),
+    countCommentsByProfileId(profileId),
+    countSocialClicksByProfileId(profileId),
+    countSocialClicksByPlatform(profileId),
+    countViewEventsSince(profileId, now - 24 * 60 * 60),
+    countViewEventsSince(profileId, now - 60 * 60),
+    countViewsByCountry(profileId),
+    countViewersByRole(profileId),
+    findRecentActivity(profileId),
+  ]);
   return {
-    views: countProfileViews(profileId),
-    likes: countProfileLikes(profileId),
-    comments: countCommentsByProfileId(profileId),
-    socialClicks: countSocialClicksByProfileId(profileId),
-    clicksByPlatform: countSocialClicksByPlatform(profileId),
-    viewsLast24h: countViewEventsSince(profileId, now - 24 * 60 * 60),
-    viewsLastHour: countViewEventsSince(profileId, now - 60 * 60),
-    viewsByCountry: countViewsByCountry(profileId),
-    viewersByRole: countViewersByRole(profileId),
-    recentActivity: findRecentActivity(profileId),
+    views,
+    likes,
+    comments,
+    socialClicks,
+    clicksByPlatform,
+    viewsLast24h,
+    viewsLastHour,
+    viewsByCountry,
+    viewersByRole,
+    recentActivity,
   };
 }

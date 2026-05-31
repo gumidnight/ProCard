@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/auth/session";
 import { findProfileByUserId } from "@/lib/db/profiles";
 import {
   upsertGameConnection,
-  deleteGameConnectionById,
+  deleteGameConnectionForProfile,
 } from "@/lib/db/game-connections";
 
 /**
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) return NextResponse.json({ error: "No profile" }, { status: 404 });
 
   const body = await req.json();
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "faceitNickname is required" }, { status: 400 });
   }
 
-  const conn = upsertGameConnection({
+  const conn = await upsertGameConnection({
     id: crypto.randomUUID(),
     profile_id: profile.id,
     game: "cs2",
@@ -47,18 +47,22 @@ export async function POST(req: Request) {
 
 /**
  * DELETE /api/profile/connections?id=<connectionId>
- * Remove any connection by ID. Ownership validated via profile.
+ * Remove one of the caller's OWN connections. Ownership is enforced in SQL
+ * (the delete is scoped by profile_id); a foreign/unknown id returns 404.
  */
 export async function DELETE(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) return NextResponse.json({ error: "No profile" }, { status: 404 });
 
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
 
-  deleteGameConnectionById(id);
+  const removed = await deleteGameConnectionForProfile(id, profile.id);
+  if (!removed) {
+    return NextResponse.json({ error: "Connection not found" }, { status: 404 });
+  }
   return NextResponse.json({ ok: true });
 }

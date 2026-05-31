@@ -1,24 +1,64 @@
 name = "procard"
-compatibility_date = "2024-09-23"
+account_id = "6822a908fa8bddc4431dc7ff3db81c32"
+main = ".open-next/worker.js"
+compatibility_date = "2025-05-05"
 compatibility_flags = ["nodejs_compat"]
 
-# D1 Database
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[observability]
+enabled = true
+
+# ─────── LOCAL DEV (top-level) ───────
 [[d1_databases]]
 binding = "DB"
 database_name = "procard-db"
-database_id = "local"                          # Replace with real ID after `wrangler d1 create`
+database_id = "local"
 migrations_dir = "migrations"
 
-# KV Namespace
 [[kv_namespaces]]
 binding = "KV"
-id = "local"                                   # Replace with real ID after `wrangler kv namespace create`
+id = "local"
 
-# R2 Bucket
 [[r2_buckets]]
 binding = "BUCKET"
-bucket_name = "procard-assets"
+bucket_name = "procard-assets-local"
+preview_bucket_name = "procard-assets-local"
 
-# Cron trigger — rank refresh every 30 minutes
-[triggers]
-crons = ["*/30 * * * *"]
+[vars]
+APP_URL = "http://localhost:3000"
+DISCORD_REDIRECT_URI = "http://localhost:3000/auth/callback"
+RIOT_REDIRECT_URI = "http://localhost:3000/api/connect/riot/callback"
+ASSET_BASE_URL = "http://localhost:3000/api/assets"
+
+# ─────── PRODUCTION ────────────────
+[env.production]
+[env.production.vars]
+APP_URL = "https://procard.gg"
+DISCORD_REDIRECT_URI = "https://procard.gg/auth/callback"
+RIOT_REDIRECT_URI = "https://procard.gg/api/connect/riot/callback"
+ASSET_BASE_URL = "https://cdn.procard.gg"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "procard-db-prod"
+database_id = "b815b15f-08fd-4285-b602-845dfd61b83b"
+migrations_dir = "migrations"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "36b6c25014eb461cbcfb66bebf1d152c"
+
+[[env.production.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "procard-assets-prod"
+
+[[env.production.routes]]
+pattern = "procard.gg/*"
+zone_name = "procard.gg"
+
+[[env.production.routes]]
+pattern = "www.procard.gg/*"
+zone_name = "procard.gg"

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile" }, { status: 404 });
   }
@@ -55,7 +55,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const existing = findTeamHistoryByProfileId(profile.id);
+  const existing = await findTeamHistoryByProfileId(profile.id);
   const existingKeys = new Set(
     existing.map((e) =>
       `${e.org_name}|${e.tournament_name ?? ""}|${e.game}`.toLowerCase(),
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   for (const h of history) {
     const key = `${h.team}|${h.tournament}|lol`.toLowerCase();
     if (existingKeys.has(key)) continue;
-    upsertTeamHistory({
+    await upsertTeamHistory({
       id: crypto.randomUUID(),
       profile_id: profile.id,
       org_name: h.team,
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
     importedCount++;
   }
 
-  const entries = findTeamHistoryByProfileId(profile.id);
+  const entries = await findTeamHistoryByProfileId(profile.id);
   return NextResponse.json({
     imported: importedCount,
     skipped: history.length - importedCount,

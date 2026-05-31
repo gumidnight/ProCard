@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated / tooling output:
+    ".open-next/**",
+    "coverage/**",
+    "test-results/**",
+    "playwright-report/**",
+    // Git worktrees created by workflow agents — never lint these
+    ".claude/**",
   ]),
 ]);
 

@@ -50,7 +50,7 @@ export function DashboardTopBar({
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border-subtle bg-surface-0/80 px-6 py-3 backdrop-blur">
       <div className="flex items-center gap-5">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <ProCardMark size={26} />
           <span className="font-display text-xl font-bold tracking-[0.06em] text-text-primary">
             PROCARD<span className="text-accent">.GG</span>

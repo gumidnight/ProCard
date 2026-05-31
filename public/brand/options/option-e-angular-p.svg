@@ -1,9 +1,0 @@
-<svg width="256" height="256" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" fill="#0B0D12"/>
-  <!-- Stem (white vertical bar) -->
-  <polygon points="5,2 11,2 11,30 5,30" fill="#F4F5F9"/>
-  <!-- Bowl (orange, angular with sharp right point) -->
-  <polygon points="11,2 26,2 30,9 26,16 11,16" fill="#FF5C00"/>
-  <!-- Bowl cutout (angular negative space) -->
-  <polygon points="14,5 23,5 26,9 23,13 14,13" fill="#0B0D12"/>
-</svg>

@@ -15,11 +15,11 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ roles: [] });
   }
-  const roles = findRolesPlayedByProfileId(profile.id);
+  const roles = await findRolesPlayedByProfileId(profile.id);
   return NextResponse.json({ roles });
 }
 
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) {
     return NextResponse.json({ error: "No profile" }, { status: 404 });
   }
@@ -42,17 +42,14 @@ export async function POST(req: Request) {
   const { roles } = body;
 
   if (!Array.isArray(roles)) {
-    return NextResponse.json(
-      { error: "roles must be an array" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "roles must be an array" }, { status: 400 });
   }
 
   // Clear and re-insert
-  deleteRolesPlayedByProfile(profile.id);
+  await deleteRolesPlayedByProfile(profile.id);
 
-  const inserted = roles.map(
-    (r: { game: string; role: string; is_main?: boolean }, i: number) =>
+  const inserted = await Promise.all(
+    roles.map(async (r: { game: string; role: string; is_main?: boolean }, i: number) =>
       upsertRolePlayed({
         id: crypto.randomUUID(),
         profile_id: profile.id,
@@ -61,6 +58,7 @@ export async function POST(req: Request) {
         is_main: r.is_main ? 1 : 0,
         display_order: i,
       }),
+    ),
   );
 
   return NextResponse.json({ roles: inserted }, { status: 201 });

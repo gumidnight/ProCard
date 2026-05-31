@@ -13,3 +13,13 @@ RIOT_REDIRECT_URI=http://localhost:3000/api/connect/riot/callback
 FACEIT_API_KEY=
 
 SESSION_SECRET=
+
+# Leaguepedia bot authentication (optional — anonymous fallback if missing)
+LEAGUEPEDIA_BOT_USER=
+LEAGUEPEDIA_BOT_PASS=
+
+# App URL (used for redirects and canonical URLs)
+APP_URL=http://localhost:3000
+
+# Asset delivery base URL (where uploaded images are served from)
+ASSET_BASE_URL=http://localhost:3000/api/assets

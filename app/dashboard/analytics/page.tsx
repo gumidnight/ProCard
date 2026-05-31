@@ -14,16 +14,16 @@ export default async function AnalyticsPage() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) redirect("/onboarding");
 
-  const analytics = getProfileAnalytics(profile.id);
+  const analytics = await getProfileAnalytics(profile.id);
 
   // Data for the shared live preview on the right.
-  const gameConnections = findGameConnectionsByProfileId(profile.id);
-  const socialLinks = findSocialLinksByProfileId(profile.id);
-  const teamHistory = findTeamHistoryByProfileId(profile.id);
-  const rolesPlayed = findRolesPlayedByProfileId(profile.id);
+  const gameConnections = await findGameConnectionsByProfileId(profile.id);
+  const socialLinks = await findSocialLinksByProfileId(profile.id);
+  const teamHistory = await findTeamHistoryByProfileId(profile.id);
+  const rolesPlayed = await findRolesPlayedByProfileId(profile.id);
 
   return (
     <AnalyticsClient

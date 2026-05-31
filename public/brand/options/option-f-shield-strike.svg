@@ -1,7 +1,0 @@
-<svg width="256" height="256" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" fill="#0B0D12"/>
-  <!-- Shield (angular, sharp bottom point) -->
-  <polygon points="4,3 28,3 26,21 16,30 6,21" fill="#F4F5F9"/>
-  <!-- Bold diagonal slash (orange, cutting through) -->
-  <polygon points="21,2 25,4 11,28 7,26" fill="#FF5C00"/>
-</svg>

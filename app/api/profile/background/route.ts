@@ -1,46 +1,39 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getSessionUser } from "@/lib/auth/session";
 import { findProfileByUserId, updateProfile } from "@/lib/db/profiles";
-import path from "node:path";
-import fs from "node:fs";
-import crypto from "node:crypto";
+import { getStorage } from "@/lib/storage";
 
-// Mirrors app/api/profile/avatar/route.ts — local-disk dev pattern.
-// Full-bleed profile background image (the one place imagery is allowed).
-const UPLOADS_DIR = path.join(process.cwd(), ".wrangler", "state", "backgrounds");
 const MAX_SIZE = 4 * 1024 * 1024; // 4 MB
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const EXT_MAP: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-const MIME_MAP: Record<string, string> = {
-  jpg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-};
 
-function ensureDir() {
-  if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  }
+function detectImageType(
+  bytes: ArrayBuffer,
+): { contentType: string; ext: string } | null {
+  const v = new Uint8Array(bytes, 0, Math.min(12, bytes.byteLength));
+  if (v[0] === 0xff && v[1] === 0xd8 && v[2] === 0xff)
+    return { contentType: "image/jpeg", ext: "jpg" };
+  if (v[0] === 0x89 && v[1] === 0x50 && v[2] === 0x4e && v[3] === 0x47)
+    return { contentType: "image/png", ext: "png" };
+  if (
+    v[0] === 0x52 &&
+    v[1] === 0x49 &&
+    v[2] === 0x46 &&
+    v[3] === 0x46 &&
+    v[8] === 0x57 &&
+    v[9] === 0x45 &&
+    v[10] === 0x42 &&
+    v[11] === 0x50
+  )
+    return { contentType: "image/webp", ext: "webp" };
+  return null;
 }
 
-export function backgroundUrl(key: string): string {
-  return `/api/profile/background?key=${encodeURIComponent(key)}`;
-}
-
-/**
- * POST /api/profile/background
- * Body: multipart/form-data with field "file" (JPEG, PNG, WebP ≤ 4 MB).
- * Stores the file AND switches background_type to "custom".
- */
+/** POST /api/profile/background — multipart/form-data field "file" (JPEG, PNG, WebP ≤ 4 MB). */
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) return NextResponse.json({ error: "No profile found" }, { status: 404 });
 
   let formData: FormData;
@@ -51,89 +44,42 @@ export async function POST(req: Request) {
   }
 
   const file = formData.get("file");
-  if (!(file instanceof File)) {
+  if (!(file instanceof File))
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
 
-  if (!ALLOWED_TYPES.has(file.type)) {
+  const bytes = await file.arrayBuffer();
+  const imageType = detectImageType(bytes);
+  if (!imageType)
     return NextResponse.json(
       { error: "File must be JPEG, PNG or WebP" },
       { status: 400 },
     );
-  }
-
-  if (file.size > MAX_SIZE) {
+  if (bytes.byteLength > MAX_SIZE)
     return NextResponse.json({ error: "File must be under 4 MB" }, { status: 400 });
-  }
 
-  ensureDir();
+  const storage = getStorage();
+  if (profile.background_key) await storage.delete(profile.background_key);
 
-  // Remove previous custom background
-  if (profile.background_key) {
-    try {
-      fs.unlinkSync(path.join(UPLOADS_DIR, profile.background_key));
-    } catch {
-      /* already gone */
-    }
-  }
+  const key = `backgrounds/${profile.id}-${crypto.randomUUID()}.${imageType.ext}`;
+  await storage.put(key, bytes, imageType.contentType);
 
-  const ext = EXT_MAP[file.type];
-  const key = `${profile.id}-${crypto.randomUUID()}.${ext}`;
-  fs.writeFileSync(path.join(UPLOADS_DIR, key), Buffer.from(await file.arrayBuffer()));
-
-  const updated = updateProfile(profile.id, {
+  const updated = await updateProfile(profile.id, {
     background_key: key,
     background_type: "custom",
   });
-  return NextResponse.json({ profile: updated, backgroundUrl: backgroundUrl(key) });
+  return NextResponse.json({ profile: updated, backgroundUrl: storage.publicUrl(key) });
 }
 
-/**
- * GET /api/profile/background?key=…
- * Streams a stored background file.
- */
-export async function GET(req: Request) {
-  const key = new URL(req.url).searchParams.get("key") ?? "";
-  // Prevent path traversal
-  if (!key || key.includes("..") || key.includes("/") || key.includes("\\")) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  const filePath = path.join(UPLOADS_DIR, key);
-  if (!fs.existsSync(filePath)) return new Response("Not found", { status: 404 });
-
-  const ext = path.extname(key).slice(1);
-  const mime = MIME_MAP[ext] ?? "application/octet-stream";
-  const data = fs.readFileSync(filePath);
-
-  return new Response(data, {
-    headers: {
-      "Content-Type": mime,
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
-}
-
-/**
- * DELETE /api/profile/background
- * Removes the uploaded background and resets to the house default.
- */
+/** DELETE /api/profile/background — removes the custom background and resets to default. */
 export async function DELETE() {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (!profile) return NextResponse.json({ error: "No profile found" }, { status: 404 });
 
-  if (profile.background_key) {
-    try {
-      fs.unlinkSync(path.join(UPLOADS_DIR, profile.background_key));
-    } catch {
-      /* already gone */
-    }
-  }
-
-  const updated = updateProfile(profile.id, {
+  if (profile.background_key) await getStorage().delete(profile.background_key);
+  const updated = await updateProfile(profile.id, {
     background_key: null,
     background_type: "default",
   });

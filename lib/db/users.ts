@@ -1,11 +1,11 @@
-import { getDb, ensureMigrated } from "./client";
+import { getDb } from "./adapter";
 import type { UserRow } from "@/types/db";
 
 // ---------------------------------------------------------------------------
 // User queries
 // ---------------------------------------------------------------------------
 
-export function upsertUser(data: {
+export async function upsertUser(data: {
   id: string;
   discord_id: string;
   username: string;
@@ -15,22 +15,42 @@ export function upsertUser(data: {
   access_token: string;
   refresh_token: string | null;
   token_expires_at: number | null;
-}): UserRow {
-  ensureMigrated();
+}): Promise<UserRow> {
   const db = getDb();
 
-  const existing = db
-    .prepare("SELECT * FROM users WHERE discord_id = ?")
-    .get(data.discord_id) as UserRow | undefined;
+  const existing = await db.first<UserRow>("SELECT * FROM users WHERE discord_id = ?", [
+    data.discord_id,
+  ]);
 
   if (existing) {
-    db.prepare(
+    await db.run(
       `UPDATE users
        SET username = ?, discriminator = ?, avatar_url = ?,
            email = ?, access_token = ?, refresh_token = ?,
            token_expires_at = ?, updated_at = unixepoch()
        WHERE discord_id = ?`,
-    ).run(
+      [
+        data.username,
+        data.discriminator,
+        data.avatar_url,
+        data.email,
+        data.access_token,
+        data.refresh_token,
+        data.token_expires_at,
+        data.discord_id,
+      ],
+    );
+    return (await db.first<UserRow>("SELECT * FROM users WHERE discord_id = ?", [
+      data.discord_id,
+    ]))!;
+  }
+
+  await db.run(
+    `INSERT INTO users (id, discord_id, username, discriminator, avatar_url, email, access_token, refresh_token, token_expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      data.id,
+      data.discord_id,
       data.username,
       data.discriminator,
       data.avatar_url,
@@ -38,55 +58,20 @@ export function upsertUser(data: {
       data.access_token,
       data.refresh_token,
       data.token_expires_at,
-      data.discord_id,
-    );
-    return db
-      .prepare("SELECT * FROM users WHERE discord_id = ?")
-      .get(data.discord_id) as UserRow;
-  }
-
-  db.prepare(
-    `INSERT INTO users (id, discord_id, username, discriminator, avatar_url, email, access_token, refresh_token, token_expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    data.id,
-    data.discord_id,
-    data.username,
-    data.discriminator,
-    data.avatar_url,
-    data.email,
-    data.access_token,
-    data.refresh_token,
-    data.token_expires_at,
+    ],
   );
 
-  return db
-    .prepare("SELECT * FROM users WHERE id = ?")
-    .get(data.id) as UserRow;
+  return (await db.first<UserRow>("SELECT * FROM users WHERE id = ?", [data.id]))!;
 }
 
-export function findUserById(id: string): UserRow | null {
-  ensureMigrated();
-  const db = getDb();
-  return (
-    (db.prepare("SELECT * FROM users WHERE id = ?").get(id) as
-      | UserRow
-      | undefined) ?? null
-  );
+export async function findUserById(id: string): Promise<UserRow | null> {
+  return getDb().first<UserRow>("SELECT * FROM users WHERE id = ?", [id]);
 }
 
-export function findUserByDiscordId(discordId: string): UserRow | null {
-  ensureMigrated();
-  const db = getDb();
-  return (
-    (db
-      .prepare("SELECT * FROM users WHERE discord_id = ?")
-      .get(discordId) as UserRow | undefined) ?? null
-  );
+export async function findUserByDiscordId(discordId: string): Promise<UserRow | null> {
+  return getDb().first<UserRow>("SELECT * FROM users WHERE discord_id = ?", [discordId]);
 }
 
-export function deleteUser(id: string): void {
-  ensureMigrated();
-  const db = getDb();
-  db.prepare("DELETE FROM users WHERE id = ?").run(id);
+export async function deleteUser(id: string): Promise<void> {
+  await getDb().run("DELETE FROM users WHERE id = ?", [id]);
 }

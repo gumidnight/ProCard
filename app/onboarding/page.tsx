@@ -8,7 +8,7 @@ export default async function OnboardingPage() {
   if (!user) redirect("/login");
 
   // If they already have a profile, send to dashboard
-  const profile = findProfileByUserId(user.id);
+  const profile = await findProfileByUserId(user.id);
   if (profile) redirect("/dashboard");
 
   return (

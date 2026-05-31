@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     const discordUser = await fetchDiscordUser(tokens.access_token);
 
     // Upsert user in DB
-    const user = upsertUser({
+    const user = await upsertUser({
       id: crypto.randomUUID(),
       discord_id: discordUser.id,
       username: discordUser.global_name ?? discordUser.username,
@@ -65,15 +65,11 @@ export async function GET(req: NextRequest) {
     const session = createSession(user.id);
 
     // Redirect based on whether they have a profile
-    const profile = findProfileByUserId(user.id);
+    const profile = await findProfileByUserId(user.id);
     const destination = profile ? "/dashboard" : "/onboarding";
 
     const response = NextResponse.redirect(new URL(destination, req.url));
-    response.cookies.set(
-      session.cookieName,
-      session.cookieValue,
-      session.cookieOptions,
-    );
+    response.cookies.set(session.cookieName, session.cookieValue, session.cookieOptions);
 
     return response;
   } catch (err) {

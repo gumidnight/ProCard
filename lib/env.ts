@@ -5,6 +5,11 @@
 function env(key: string): string {
   const val = process.env[key];
   if (!val) throw new Error(`Missing environment variable: ${key}`);
+  if (key === "SESSION_SECRET" && val.length < 32) {
+    throw new Error(
+      "SESSION_SECRET must be at least 32 characters. Generate with: openssl rand -hex 32",
+    );
+  }
   return val;
 }
 
@@ -46,6 +51,22 @@ export const config = {
   session: {
     get secret() {
       return env("SESSION_SECRET");
+    },
+  },
+  app: {
+    get url() {
+      return envOptional("APP_URL") ?? "http://localhost:3000";
+    },
+    get assetBaseUrl() {
+      return envOptional("ASSET_BASE_URL") ?? "/api/assets";
+    },
+  },
+  leaguepedia: {
+    get botUser() {
+      return envOptional("LEAGUEPEDIA_BOT_USER");
+    },
+    get botPass() {
+      return envOptional("LEAGUEPEDIA_BOT_PASS");
     },
   },
 } as const;

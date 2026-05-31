@@ -15,11 +15,11 @@ interface Params {
 /** GET — list comments newest-first. */
 export async function GET(_req: Request, { params }: Params) {
   const { slug } = await params;
-  const profile = findProfileBySlug(slug);
+  const profile = await findProfileBySlug(slug);
   if (!profile) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json({ comments: findCommentsByProfileId(profile.id) });
+  return NextResponse.json({ comments: await findCommentsByProfileId(profile.id) });
 }
 
 /** POST — add a comment (login required). */
@@ -29,7 +29,7 @@ export async function POST(req: Request, { params }: Params) {
   if (!user) {
     return NextResponse.json({ error: "Sign in to comment" }, { status: 401 });
   }
-  const profile = findProfileBySlug(slug);
+  const profile = await findProfileBySlug(slug);
   if (!profile) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }: Params) {
     );
   }
 
-  const comment = createComment({
+  const comment = await createComment({
     profile_id: profile.id,
     user_id: user.id,
     body: text,
@@ -60,7 +60,7 @@ export async function POST(req: Request, { params }: Params) {
         ...comment,
         author_username: user.username,
         author_avatar_url: user.avatar_url,
-        author_slug: findProfileByUserId(user.id)?.slug ?? null,
+        author_slug: (await findProfileByUserId(user.id))?.slug ?? null,
       },
     },
     { status: 201 },
@@ -74,7 +74,7 @@ export async function DELETE(req: Request, { params }: Params) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const profile = findProfileBySlug(slug);
+  const profile = await findProfileBySlug(slug);
   if (!profile) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -84,7 +84,7 @@ export async function DELETE(req: Request, { params }: Params) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
-  const comment = findCommentById(id);
+  const comment = await findCommentById(id);
   if (!comment || comment.profile_id !== profile.id) {
     return NextResponse.json({ error: "Comment not found" }, { status: 404 });
   }
@@ -95,6 +95,6 @@ export async function DELETE(req: Request, { params }: Params) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  deleteCommentById(id);
+  await deleteCommentById(id);
   return NextResponse.json({ success: true });
 }
