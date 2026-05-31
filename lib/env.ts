@@ -2,9 +2,16 @@
 // Environment variable access — works in both local dev and Cloudflare Workers
 // ---------------------------------------------------------------------------
 
+function clean(val: string): string {
+  // Strip BOM (﻿) and surrounding whitespace — PowerShell echo and some
+  // editors can silently prepend a byte-order mark to env var values.
+  return val.replace(/^﻿/, "").trim();
+}
+
 function env(key: string): string {
-  const val = process.env[key];
-  if (!val) throw new Error(`Missing environment variable: ${key}`);
+  const raw = process.env[key];
+  if (!raw) throw new Error(`Missing environment variable: ${key}`);
+  const val = clean(raw);
   if (key === "SESSION_SECRET" && val.length < 32) {
     throw new Error(
       "SESSION_SECRET must be at least 32 characters. Generate with: openssl rand -hex 32",
@@ -14,7 +21,8 @@ function env(key: string): string {
 }
 
 function envOptional(key: string): string | undefined {
-  return process.env[key] || undefined;
+  const raw = process.env[key];
+  return raw ? clean(raw) : undefined;
 }
 
 export const config = {

@@ -14,11 +14,7 @@ import {
   findCommentsByProfileId,
   hasVisitorLiked,
 } from "@/lib/db/engagement";
-import {
-  getOrCreateVisitorId,
-  makeSignedVisitorCookieValue,
-  visitorCookieOptions,
-} from "@/lib/auth/visitor";
+import { getOrCreateVisitorId } from "@/lib/auth/visitor";
 import { getSessionUser } from "@/lib/auth/session";
 import { getStorage } from "@/lib/storage";
 import { ProfilePageClient } from "@/components/profile/ProfilePageClient";
@@ -94,7 +90,9 @@ export default async function SlugPage({ params }: SlugPageProps) {
     findCommentsByProfileId(profile.id),
   ]);
 
-  const page = (
+  // Cookie is set by the view API route (POST /api/profile/[slug]/view) which the
+  // client calls on mount — setting cookies in a Server Component page is not allowed.
+  return (
     <ProfilePageClient
       profile={profile}
       gameConnections={gameConnections}
@@ -110,14 +108,4 @@ export default async function SlugPage({ params }: SlugPageProps) {
       isOwner={viewer?.id === profile.user_id}
     />
   );
-
-  // Set the signed visitor cookie if this is a new visitor
-  if (isNew) {
-    const { cookies } = await import("next/headers");
-    const store = await cookies();
-    const opts = visitorCookieOptions();
-    store.set(opts.name, makeSignedVisitorCookieValue(visitorId), opts);
-  }
-
-  return page;
 }
