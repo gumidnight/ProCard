@@ -18,9 +18,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build worker
+  deploy:
+    name: Build and deploy worker
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -51,37 +52,19 @@ jobs:
           RIOT_REDIRECT_URI: ${{ secrets.RIOT_REDIRECT_URI }}
           APP_URL: ${{ secrets.APP_URL }}
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: worker-production
-          path: .open-next/
-          retention-days: 1
-
-  deploy:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: build
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: pnpm }
-      - run: pnpm install --frozen-lockfile
-
-      - uses: actions/download-artifact@v4
-        with: { name: worker-production, path: .open-next/ }
+      - name: Patch worker bundle for Cloudflare
+        run: node scripts/patch-handler.mjs
 
       - name: Apply D1 migrations (production)
         run: pnpm exec wrangler d1 migrations apply procard-db-prod --remote --env production
         env:
-          CLOUDFLARE_API_KEY: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_EMAIL: ${{ secrets.CF_EMAIL }}
 
       - name: Deploy worker (production)
-        run: pnpm exec wrangler deploy --env production
+        run: pnpm exec wrangler deploy --env production --no-bundle --config wrangler.patched.toml
         env:
-          CLOUDFLARE_API_KEY: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_EMAIL: ${{ secrets.CF_EMAIL }}
 
       - name: Production smoke test (best-effort)
