@@ -1,7 +1,7 @@
 name = "procard"
 account_id = "6822a908fa8bddc4431dc7ff3db81c32"
 main = ".open-next/worker.js"
-compatibility_date = "2025-05-05"
+compatibility_date = "2025-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
