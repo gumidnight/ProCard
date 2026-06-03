@@ -56,35 +56,34 @@ jobs:
         run: node scripts/patch-handler.mjs
 
       - name: Check Cloudflare deploy secrets
-        run: |
-          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
-            echo "Cloudflare API token missing (CLOUDFLARE_API_TOKEN or CF_API_TOKEN)."
-            echo "Skipping D1 migrations and deploy for this run."
-          fi
-          if [ -z "${CLOUDFLARE_EMAIL}" ]; then
-            echo "Cloudflare email missing (CLOUDFLARE_EMAIL or CF_EMAIL)."
-            echo "Skipping D1 migrations and deploy for this run."
-          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
           CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL || secrets.CF_EMAIL }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN}" ] && [ -n "${CLOUDFLARE_EMAIL}" ]; then
+            echo "Cloudflare credentials present — deploy will run."
+            echo "HAS_CF=true" >> "$GITHUB_ENV"
+          else
+            echo "Cloudflare credentials missing — skipping D1 migrations and deploy for this run."
+            echo "HAS_CF=false" >> "$GITHUB_ENV"
+          fi
 
       - name: Apply D1 migrations (production)
-        if: ${{ (secrets.CLOUDFLARE_API_TOKEN != '' || secrets.CF_API_TOKEN != '') && (secrets.CLOUDFLARE_EMAIL != '' || secrets.CF_EMAIL != '') }}
+        if: env.HAS_CF == 'true'
         run: pnpm exec wrangler d1 migrations apply procard-db-prod --remote --env production
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
           CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL || secrets.CF_EMAIL }}
 
       - name: Deploy worker (production)
-        if: ${{ (secrets.CLOUDFLARE_API_TOKEN != '' || secrets.CF_API_TOKEN != '') && (secrets.CLOUDFLARE_EMAIL != '' || secrets.CF_EMAIL != '') }}
+        if: env.HAS_CF == 'true'
         run: pnpm exec wrangler deploy --env production --no-bundle --config wrangler.patched.toml
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
           CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL || secrets.CF_EMAIL }}
 
       - name: Production smoke test (best-effort)
-        if: ${{ (secrets.CLOUDFLARE_API_TOKEN != '' || secrets.CF_API_TOKEN != '') && (secrets.CLOUDFLARE_EMAIL != '' || secrets.CF_EMAIL != '') }}
+        if: env.HAS_CF == 'true'
         continue-on-error: true
         run: pnpm exec playwright test tests/e2e/smoke.spec.ts --config playwright.config.ts
         env:
