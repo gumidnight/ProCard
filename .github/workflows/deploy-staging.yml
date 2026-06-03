@@ -1,12 +1,10 @@
 name: Deploy — Staging
 
-# Runs on every push to master AFTER ci.yml gates pass.
-# Configure the "staging" GitHub Environment (repo Settings → Environments)
-# with any desired wait timers or required reviewers.
+# Staging deploys are disabled for automatic runs.
+# This workflow can still be run manually if needed.
 
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
