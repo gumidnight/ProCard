@@ -123,7 +123,13 @@ export async function PATCH(req: Request) {
     "tagline",
     "bio",
     "status",
+    "status_note",
     "esports_role",
+    "current_team_name",
+    "current_team_logo_url",
+    "current_league",
+    "current_role",
+    "current_game",
     "is_published",
   ] as const;
 
