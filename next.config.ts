@@ -48,7 +48,8 @@ export default nextConfig;
 // Wire Cloudflare bindings (DB/KV/R2/...) into `next dev` via getCloudflareContext().
 // Only run during development — calling this during `next build` starts workerd
 // and causes SQLITE_BUSY crashes on CI.
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+
 if (process.env.NODE_ENV !== "production") {
-  const { initOpenNextCloudflareForDev } = await import("@opennextjs/cloudflare");
   initOpenNextCloudflareForDev();
 }
